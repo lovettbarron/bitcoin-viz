@@ -1,0 +1,41 @@
+body {
+  margin: 0px 0px 0px 0px;
+  font-family: 'Muli', sans-serif;
+  background-color: #141314;
+  }
+
+  .intro {
+    padding: 50px 50px 50px 50px;
+    background-color: #312E31;
+  }
+
+  .viz {
+    padding: 10px 10px 10px 10px;
+    background-color: #141314;
+  }
+
+  .largeType {
+    font-size: 30px;    
+    color: #D100B5;
+  }
+
+  .smallType {
+    font-size: 15px;
+    color: #cccccc;
+    fill: #cccccc;
+  }
+
+  #unconfirmed-one {
+    padding-top: 20px;
+  }
+  
+  .unconfirmed {
+    fill: #D100B5;
+    stroke-width: 1;
+    stroke: #D100B5;
+  }
+  
+  .confirmed {
+    fill: #00C788;
+    fill-opacity: 1;
+  }

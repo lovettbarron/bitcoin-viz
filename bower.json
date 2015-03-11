@@ -1,0 +1,24 @@
+{
+  "name": "RoomListener",
+  "version": "0.0.0",
+  "authors": [
+    "Tim Shi <timshi@ideo.com>"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "public/bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap": "latest",
+    "ratchet": "git@github.com:twbs/ratchet.git",
+    "underscore": "latest",
+    "backbone": "latest",
+    "d3": "~3.4.8"
+  }
+}
