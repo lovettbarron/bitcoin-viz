@@ -1,6 +1,4 @@
 var 
-columnLeft = 0, 
-columnTop = 0,
 horzSpace = 4, 
 vertSpace = 4,
 blockHeight = 25,
@@ -18,7 +16,7 @@ var blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
 var txns = [];
 var hashToTxnIndex = {};
 
-var svg;
+var vizSvg;
 
 txnConn.onopen = function (ev) {
     var req = {type: "new-transaction", block_chain: "bitcoin"};
@@ -27,7 +25,7 @@ txnConn.onopen = function (ev) {
 
   txnConn.onmessage = function (ev) {
     var x = JSON.parse(ev.data);
-    console.dir(x);
+    // console.dir(x);
     if (x.payload.transaction) {
       update(x);
     }
@@ -84,12 +82,12 @@ var bodyLoaded = function() {
   .attr("class", "smallType")
   .text("A 10 bitcoin transaction");
 
-d3.select("#confirmed-key")
-  .append("svg").attr("height", blockHeight).attr("width", 500)
-  .append("rect")
-  .attr("class", "confirmed")
-  .attr("x", 0).attr("y", 0)
-  .attr("width", pixelsPerBtc*10).attr("height", blockHeight);
+  d3.select("#confirmed-key")
+    .append("svg").attr("height", blockHeight).attr("width", 500)
+    .append("rect")
+    .attr("class", "confirmed")
+    .attr("x", 0).attr("y", 0)
+    .attr("width", pixelsPerBtc*10).attr("height", blockHeight);
 
   d3.select("#confirmed-key").select("svg")
   .append("text")
@@ -99,9 +97,9 @@ d3.select("#confirmed-key")
   .attr("class", "smallType")
   .text("A 10 bitcoin confirmed transaction");
 
-  svg = d3.select(".viz").append("svg")
+  vizSvg = d3.select(".viz").append("svg")
   .attr("width", $(window).width())
-  .attr("height", 10000);
+  .attr("height", $(window).height());
 
   d3.select("body")
   .on("click", function() {
@@ -152,7 +150,13 @@ var getWidthFromSatoshis = function(satoshis) {
 }
 
 var draw = function(data) {
-  svg.selectAll("rect")
+  var layoutXYList = getRectXYListFromData(data, $(window).width(), $(window).height, blockHeight, horzSpace, vertSpace);
+  var vizSvgHeight = $(".viz").find("svg").height();
+  if (_.last(layoutXYList).y > vizSvgHeight) {
+    $(".viz").find("svg").height(vizSvgHeight + $(window).height());
+  }
+
+  vizSvg.selectAll("rect")
   .data(data)
   .attr("class", function(d) {
     if (d.payload.transaction.confirmations > 0) {
@@ -171,33 +175,58 @@ var draw = function(data) {
       return opacity;
     }
   })
+  .attr("x", function(d, i) {
+    return layoutXYList[i].x;
+  })
+  .attr("y", function(d, i) {
+    return layoutXYList[i].y;
+  })
   .enter()
   .append("rect")
+  // setting x and y for new items is same as x and y for existing, but we dont' update columnLeft or columnTop
+  .attr("x", function(d, i) {
+    return layoutXYList[i].x;
+  })
+  .attr("y", function(d, i) {
+    return layoutXYList[i].y;
+  })
   .attr("width", function(d, i) {
     return getWidthFromSatoshis(d.payload.transaction.amount);
   })
   .attr("height", blockHeight)
-  .attr("x", function(d, i) {
-    var width = getWidthFromSatoshis(d.payload.transaction.amount);
-    var newColumnLeft = columnLeft + horzSpace + width;
-    var value;
-    if (newColumnLeft > $(window).width()) {
-      value = 0;
-      columnLeft = horzSpace + width;
-      columnTop += blockHeight + vertSpace;
-    } else {
-      value = columnLeft;
-      columnLeft = newColumnLeft;
-    }
-    return value;
-  })
-  .attr("y", function(d, i) {
-    return columnTop;
-  })
   .attr("fill", enterColor)
   .transition()
   .duration(750)
   .attr("fill", regularColor);
+};
+
+// given the data set of transactions, returns list of objects with computed x and y properties
+var getRectXYListFromData = function(txns, screenWidth, screenHeight, rectHeight, horzSpace, vertSpace) {
+  var left = 0;
+  var top = 0;
+  var list = [];
+
+  // a bit ugly since map refers to state outside the iteree function
+  for (var i = 0; i < txns.length; i++) {
+    var object = {};
+    var width = getWidthFromSatoshis(txns[i].payload.transaction.amount);
+    var newLeft = left + horzSpace + width;
+    var x;
+
+    if (newLeft > screenWidth) {
+      x = 0;
+      left = horzSpace + width;
+      top += rectHeight + vertSpace;
+    } else {
+      x = left;
+      left = newLeft;
+    }
+    object.x = x;
+    object.y = top;
+    list[i] = object;
+  };
+
+  return list;
 };
 
 var update = _.throttle(function(txn) {
