@@ -115,6 +115,18 @@ d3.select("#confirmed-key")
    }
   });
 
+  d3.select("body")
+  .on("tap", function() {
+   console.log("clicked");
+   if ($("#intro-text").css("opacity") > 0) {
+     $("#intro-text").animate({ opacity: 0}, 1000);
+     $("#intro-cover").animate({ opacity: 0}, 1000);
+   } else {
+     $("#intro-text").animate({ opacity: 1.0}, 1000);
+     $("#intro-cover").animate({ opacity: 0.5}, 1000);
+   }
+  });
+
   setTimeout(function() {
     $("#intro-text").animate({ opacity: 0}, 1000);
     $("#intro-cover").animate({ opacity: 0}, 1000);
