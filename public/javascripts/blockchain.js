@@ -20,6 +20,42 @@ var hashToTxnIndex = {};
 
 var svg;
 
+txnConn.onopen = function (ev) {
+    var req = {type: "new-transaction", block_chain: "bitcoin"};
+    txnConn.send(JSON.stringify(req));
+  };
+
+  txnConn.onmessage = function (ev) {
+    var x = JSON.parse(ev.data);
+    console.dir(x);
+    if (x.payload.transaction) {
+      update(x);
+    }
+  };
+
+  txnConn.onclose = function (ev) {
+    console.log("txnConn closed");
+    txnConn = new WebSocket("wss://ws.chain.com/v2/notifications");
+  };
+
+  blockConn.onopen = function (ev) {
+    var req = {type: "new-block", block_chain: "bitcoin"};
+    blockConn.send(JSON.stringify(req));
+  };
+
+  blockConn.onmessage = function (ev) {
+    var x = JSON.parse(ev.data);
+    console.dir(x);
+    if (x.payload.block) {
+      updateBlock(x);
+    }
+  };
+
+  blockConn.onclose = function (ev) {
+    console.log("blockConn closed");
+    blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
+  };
+
 
 
 var bodyLoaded = function() {
@@ -30,73 +66,38 @@ var bodyLoaded = function() {
   /* you can see what is going on in the engine with console.log(window.engine) */
   window.engine = new GSS(document);
 
-  txnConn.onopen = function (ev) {
-    var req = {type: "new-transaction", block_chain: "bitcoin"};
-    txnConn.send(JSON.stringify(req));
-  };
 
-  txnConn.onmessage = function (ev) {
-    var x = JSON.parse(ev.data);
-    if (x.payload.transaction) {
-      console.dir(x);
-      update(x);
-    }
-  };
 
-  txnConn.onclose = function (ev) {
-    txnConn = new WebSocket("wss://ws.chain.com/v2/notifications");
-  };
-
-  blockConn.onopen = function (ev) {
-    var req = {type: "new-block", block_chain: "bitcoin"};
-    blockConn.send(JSON.stringify(req));
-  };
-
-  blockConn.onmessage = function (ev) {
-    console.log("message");
-    var x = JSON.parse(ev.data);
-    if (x.payload.block) {
-      updateBlock(x);
-    }
-  };
-
-  blockConn.onclose = function (ev) {
-    blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
-  };
-
-  d3.select("#unconfirmed-one")
+  d3.select("#unconfirmed-key")
   .append("svg").attr("height", blockHeight).attr("width", 500)
   .append("rect")
   .attr("class", "unconfirmed")
+  .attr("fill-opacity", 0)
   .attr("x", 0).attr("y", 0)
-  .attr("width", pixelsPerBtc).attr("height", blockHeight);
+  .attr("width", pixelsPerBtc*10).attr("height", blockHeight);
 
-  d3.select("#unconfirmed-one").select("svg")
+  d3.select("#unconfirmed-key").select("svg")
   .append("text")
-  .attr("x", pixelsPerBtc + 6)
+  .attr("x", pixelsPerBtc*10 + 8)
   .attr("y", 0)
-  .attr("dy", ".9em")
+  .attr("dy", "1em")
   .attr("class", "smallType")
-  .text("1 bitcoin transaction, worth $300");
+  .text("A 10 bitcoin transaction");
 
-
-
-
-  d3.select("#confirmed-one")
-  .append("div")
+d3.select("#confirmed-key")
   .append("svg").attr("height", blockHeight).attr("width", 500)
   .append("rect")
   .attr("class", "confirmed")
   .attr("x", 0).attr("y", 0)
-  .attr("width", pixelsPerBtc).attr("height", blockHeight);
+  .attr("width", pixelsPerBtc*10).attr("height", blockHeight);
 
-  d3.select("#confirmed-one").select("svg")
+  d3.select("#confirmed-key").select("svg")
   .append("text")
-  .attr("x", pixelsPerBtc + 6)
+  .attr("x", pixelsPerBtc*10 + 8)
   .attr("y", 0)
-  .attr("dy", ".9em")
+  .attr("dy", "1em")
   .attr("class", "smallType")
-  .text("1 bitcoin transaction, mined into a block");
+  .text("A 10 bitcoin confirmed transaction");
 
   svg = d3.select(".viz").append("svg")
   .attr("width", $(window).width())
