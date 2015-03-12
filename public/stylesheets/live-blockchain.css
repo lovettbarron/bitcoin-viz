@@ -1,12 +1,19 @@
 body {
   margin: 0px 0px 0px 0px;
-  font-family: 'Muli', sans-serif;
   background-color: #141314;
   }
 
-  .intro {
+  #intro-cover {
+    background-color: #000000;
+    opacity: 0.5;
+    z-index: 2;
+  }
+
+  #intro-text {
     padding: 50px 50px 50px 50px;
-    background-color: #312E31;
+    opacity: 0;
+    z-index: 2;
+    /*background-color: #312E31;*/
   }
 
   .viz {
@@ -15,14 +22,21 @@ body {
   }
 
   .largeType {
-    font-size: 30px;    
-    color: #D100B5;
+    font-family: 'Julius Sans One', Helvetica, sans-serif;
+    font-size: 50px;
+    line-height: 45px;
+    text-transform: uppercase;
+    color: #CC8AC3;
   }
 
   .smallType {
-    font-size: 15px;
-    color: #cccccc;
-    fill: #cccccc;
+    margin: 50px 200px 0px 200px;
+
+    font-size: 18px;
+    /*font-style: italic;*/
+    line-height: 36px;
+    color: #bbbbbb;
+    fill: #bbbbbb;
   }
 
   #unconfirmed-one {
