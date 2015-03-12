@@ -4,7 +4,7 @@ body {
   }
 
 p {
-  margin-top: 30px;
+  margin-top: 20px;
 }
 
   #intro-cover {
@@ -27,16 +27,16 @@ p {
 
   .largeType {
     font-family: 'Julius Sans One', Helvetica, sans-serif;
-    font-size: 50px;
+    font-size: 40px;
     line-height: 50px;
     text-transform: uppercase;
     color: #CC8AC3;
   }
 
   .smallType {
-    margin: 50px 200px 0px 0;
-    font-size: 18px;
-    line-height: 36px;
+    width: 500px;
+    font-size: 14px;
+    line-height: 28px;
     color: #bbbbbb;
     fill: #bbbbbb;
   }

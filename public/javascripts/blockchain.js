@@ -80,7 +80,7 @@ var bodyLoaded = function() {
   .append("text")
   .attr("x", pixelsPerBtc*10 + 8)
   .attr("y", 0)
-  .attr("dy", "1em")
+  .attr("dy", "1.2em")
   .attr("class", "smallType")
   .text("A 10 bitcoin transaction");
 
@@ -95,7 +95,7 @@ d3.select("#confirmed-key")
   .append("text")
   .attr("x", pixelsPerBtc*10 + 8)
   .attr("y", 0)
-  .attr("dy", "1em")
+  .attr("dy", "1.2em")
   .attr("class", "smallType")
   .text("A 10 bitcoin confirmed transaction");
 
