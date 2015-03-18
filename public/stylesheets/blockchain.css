@@ -7,51 +7,47 @@ p {
   margin-top: 20px;
 }
 
-  #intro-cover {
-    background-color: #000000;
-    opacity: 0.5;
-    z-index: 2;
-  }
+.largeType {
+  font-family: 'Julius Sans One', Helvetica, sans-serif;
+  font-size: 40px;
+  line-height: 50px;
+  text-transform: uppercase;
+  color: #CC8AC3;
+}
 
-  #intro-text {
-    padding: 50px 50px 50px 50px;
-    opacity: 0;
-    z-index: 2;
-    /*background-color: #312E31;*/
-  }
+.smallType {
+  width: 500px;
+  font-size: 14px;
+  line-height: 28px;
+  color: #bbbbbb;
+  fill: #bbbbbb;
+}
 
-  .viz {
-    padding: 10px 10px 10px 10px;
-    background-color: #141314;
-  }
+.unconfirmed {
+  fill: #D100B5;
+  stroke-width: 1;
+  stroke: #D100B5;
+}
 
-  .largeType {
-    font-family: 'Julius Sans One', Helvetica, sans-serif;
-    font-size: 40px;
-    line-height: 50px;
-    text-transform: uppercase;
-    color: #CC8AC3;
-  }
+.confirmed {
+  fill: #00C788;
+  fill-opacity: 1;
+}
 
-  .smallType {
-    width: 500px;
-    font-size: 14px;
-    line-height: 28px;
-    color: #bbbbbb;
-    fill: #bbbbbb;
-  }
+#intro-container {
+  background-color: #000000;
+  opacity: 0.5;
+  z-index: 2;
+}
 
-  #unconfirmed-one {
-    padding-top: 20px;
-  }
-  
-  .unconfirmed {
-    fill: #D100B5;
-    stroke-width: 1;
-    stroke: #D100B5;
-  }
-  
-  .confirmed {
-    fill: #00C788;
-    fill-opacity: 1;
-  }
+#intro-text {
+  padding: 50px 50px 50px 50px;
+  opacity: 0;
+  z-index: 2;
+  /*background-color: #312E31;*/
+}
+
+#viz-canvas {
+  padding: 10px 10px 10px 10px;
+  background-color: #141314;
+}
