@@ -1,10 +1,9 @@
-var 
+var
 horzSpace = 4, // space between rectangles
 newRectangleExtraHorzSpace = 5, // extra space for new rectanges.
 vertSpace = 4,
 rectangleHeight = 25, 
 pixelsPerBtc = 10, // rectangle width in pixels per bitcoin value in the transaction
-maxWidth = $(window).width() - 20, // max width of a transaction. If we see a txn with value greater than this, we'll just display it with this width.
 minWidth = 1,
 opacityDecayRate = 120000, // millis per opacity unit. How we translate how old a transaction is to how opaque the rectangle fill is.
 closeIntroDelay = 15000; // delay before hiding the intro text.
@@ -49,7 +48,6 @@ blockConn.onopen = function (ev) {
 
 blockConn.onmessage = function (ev) {
   var x = JSON.parse(ev.data);
-  console.dir(x);
   if (x.payload.block) {
     updateBlock(x);
   }
@@ -60,9 +58,8 @@ blockConn.onclose = function (ev) {
   blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
 };
 
-// initialize a bunch of stuff after body is loaded.
-var bodyLoaded = function() {
-
+// initialize a bunch of stuff once document is ready
+$(document).ready(function() {
   $("#intro-text").animate({ opacity: 1.0}, 3000);
 
   /* you can see what is going on in the engine with console.log(window.engine) */
@@ -119,12 +116,18 @@ var bodyLoaded = function() {
    }
   });
 
+  // call draw if window is resized
+  $(window).on("resize", _.debounce(function() {
+    vizSvg.attr("width", $(window).width());
+    draw(txns);
+  }, 500));
+
   // set timeout that hides intro text
   setTimeout(function() {
     $("#intro-text").animate({ opacity: 0}, 1000);
     $("#intro-container").animate({ opacity: 0}, 1000);
   }, closeIntroDelay);
-};
+});
 
 /* called when we get a new confirmed block chain block from chain. Gets transaction hashes for all
 transactions in the block. Many of these transactions we'll have already seen when we got chain's transaction
@@ -143,6 +146,7 @@ var updateBlock = function(block) {
 
 // convert value of transaction in satoshis to pixel width.
 var getWidthFromSatoshis = function(satoshis) {
+  var maxWidth = $(window).width();
   var w = (satoshis / 1e8) * pixelsPerBtc;
   w = (w > maxWidth)? maxWidth : w;
   w = (w < minWidth)? minWidth : w;
@@ -153,7 +157,7 @@ var getWidthFromSatoshis = function(satoshis) {
 var draw = function(data) {
 
   // get xy coordinates of the rectangle we want to draw for each transaction.
-  var layoutXYList = getRectXYListFromData(data, $(window).width(), $(window).height, rectangleHeight, horzSpace, vertSpace);
+  var layoutXYList = getRectXYListFromData(data, $(window).width(), $(window).height(), rectangleHeight, horzSpace, vertSpace);
   var vizSvgHeight = $("#viz-canvas").find("svg").height();
 
   // if the y coordinate of the last transaction is greater than window canvas height, make the canvas bigger.
@@ -191,6 +195,9 @@ var draw = function(data) {
   })
   .attr("y", function(d, i) {
     return layoutXYList[i].y;
+  })
+  .attr("width", function(d, i) {
+    return getWidthFromSatoshis(d.payload.transaction.amount);
   })
   .enter()
   .append("rect")
