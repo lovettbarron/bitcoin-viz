@@ -6,21 +6,11 @@
 var express = require('express');
 var http = require('http');
 var path = require('path');
-var util = require('util');
 
 var app = express();
 
-var ejs = require('ejs'); ejs.open = '{{'; ejs.close = '}}';
-
-// all environments
-
-// app.configure(function(){
-//     app.use(express.basicAuth('thelaunchlab', 'augmentation'));
-// });
-
 app.set('port', process.env.PORT || 3000);
 app.set('views', __dirname + '/views');
-app.set('view engine', 'ejs');
 app.use(express.favicon());
 app.use(express.logger('dev'));
 app.use(express.bodyParser());
