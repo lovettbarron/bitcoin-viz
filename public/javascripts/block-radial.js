@@ -80,10 +80,12 @@ have confirmations = 1, meaning they're now included in a blockchain block. This
 */
 var updateBlock = function(block) {
   var confirmedTxns = block.payload.block.transaction_hashes;
+  var timestamp = new Date.now();
   _.each(confirmedTxns, function(confirmedTxnHash) {
     var idx = hashToTxnIndex[confirmedTxnHash];
     if (idx) {
       txns[idx].payload.transaction.confirmations = 1;
+      txns[idx].payload.transaction.confirmationTimestamp = timestamp;
     }
   });
 };
@@ -109,62 +111,110 @@ var draw = function(data) {
     $("#viz-canvas").find("svg").height(vizSvgHeight + $(window).height());
   }
 
-  // we use d3 to draw
-  vizSvg.selectAll("rect")
-  .data(data)
-  .attr("class", function(d) {
-    // set display class based on whether transaction was confirmed or not
-    if (d.payload.transaction.confirmations > 0) {
-      return "confirmed";
-    } else {
-      return "unconfirmed";
-    }
-  })
 
-  /* for confirmed transactions, we draw rectangles with no fill. For unconfirmed transactions, we have a fill opacity that goes
-  down as the transaction gets older.
-  */
-  .attr("fill-opacity", function(d, i) {
-    if (d.payload.transaction.confirmations > 0) {
-      return 1;
-    }  else {
-      var timeDiff = (new Date()) - d.pushedAt;
-      var opacity = 1 - (timeDiff / opacityDecayRate);
-      opacity = (opacity < 0)? 0 : opacity;
-      return opacity;
-    }
-  })
-  .attr("x", function(d, i) {
-    return layoutXYList[i].x;
-  })
-  .attr("y", function(d, i) {
-    return layoutXYList[i].y;
-  })
-  .attr("width", function(d, i) {
-    return getWidthFromSatoshis(d.payload.transaction.amount);
-  })
-  .enter()
-  .append("rect")
-  // properties of the rectangle for a just added transaction.
-  .attr("x", function(d, i) {
-    return layoutXYList[i].x + newRectangleExtraHorzSpace;
-  })
-  .attr("y", function(d, i) {
-    return layoutXYList[i].y;
-  })
-  .attr("width", function(d, i) {
-    return getWidthFromSatoshis(d.payload.transaction.amount);
-  })
-  .attr("height", rectangleHeight)
+  // var confirmedBlock = svg.selectAll("g")
+  // 	.data(function(d) {
+  // 		_.each(d.)
+  // 	})
+  // 	.enter()
+  // 	.attr("class",function() {
 
-  // new rectangles start as a bright white color and fade to pink.
-  .attr("fill", enterColor)
-  .transition()
-  .duration(750)
-  .attr("x", function(d, i) {
-    return layoutXYList[i].x;
-  })
-  .attr("fill", regularColor);
+  // 	})
+
+var getAngle = function(increment, size, padding) {
+	var ticks = _.isUndefined(padding) ? 360 : padding;
+	var degrees = 90 - (increment * (360 / ticks));
+	var radians = (degrees / 360) * 2 * Math.PI;
+	return radians;
+}
+
+// var translateAngleToCenter = function(x,y) {
+
+// }
+
+var radius = 300;
+
+
+vizSvg.selectAll("line")
+	.data(data)
+	.enter()
+	.append("line")
+	.attr("x1", function(d,i) {
+		return Math.cos(getAngle(i))*radius;
+	})
+	.attr("y1", function(d,i) {
+		return Math.sin(getAngle(i))*radius;
+		// getAngle(getWidthFromSatoshis(d.payload.transaction.amount))
+	})
+	.attr("x2", function(d,i) {
+		return Math.cos(getAngle(i))*(radius+getWidthFromSatoshis(d.payload.transaction.amount));
+	})
+	.attr("y2", function(d,i) {
+		return Math.sin(getAngle(i))*(radius+getWidthFromSatoshis(d.payload.transaction.amount));
+	})
+	.attr("stroke","red")
+	;
+
+
+
+
+
+  // // we use d3 to draw
+  // vizSvg.selectAll("line")
+  // .data(data)
+  // .attr("class", function(d) {
+  //   // set display class based on whether transaction was confirmed or not
+  //   if (d.payload.transaction.confirmations > 0) {
+  //     return "confirmed";
+  //   } else {
+  //     return "unconfirmed";
+  //   }
+  // })
+
+  // /* for confirmed transactions, we draw rectangles with no fill. For unconfirmed transactions, we have a fill opacity that goes
+  // down as the transaction gets older.
+  // */
+  // .attr("fill-opacity", function(d, i) {
+  //   if (d.payload.transaction.confirmations > 0) {
+  //     return 1;
+  //   }  else {
+  //     var timeDiff = (new Date()) - d.pushedAt;
+  //     var opacity = 1 - (timeDiff / opacityDecayRate);
+  //     opacity = (opacity < 0)? 0 : opacity;
+  //     return opacity;
+  //   }
+  // })
+  // .attr("y", function(d, i) {
+  //   return layoutXYList[i].x;
+  // })
+  // .attr("x", function(d, i) {
+  //   return layoutXYList[i].y;
+  // })
+  // .attr("width", function(d, i) {
+  //   return getWidthFromSatoshis(d.payload.transaction.amount);
+  // })
+  // .enter()
+  // .append("rect")
+  // // properties of the rectangle for a just added transaction.
+  // .attr("y", function(d, i) {
+  //   return layoutXYList[i].x + newRectangleExtraHorzSpace;
+  // })
+  // .attr("x", function(d, i) {
+  //   return layoutXYList[i].y;
+  // })
+  // .attr("width", function(d, i) {
+  //   return getWidthFromSatoshis(d.payload.transaction.amount);
+  // })
+  // .attr("height", rectangleHeight)
+
+  // // new rectangles start as a bright white color and fade to pink.
+  // .attr("fill", enterColor)
+  // .transition()
+  // .duration(750)
+  // .attr("x", function(d, i) {
+  //   return layoutXYList[i].x;
+  // })
+  // .attr("fill", regularColor);
 
 };
 
