@@ -64,11 +64,12 @@ $(document).ready(function() {
   // create the svg canvas where we'll draw the visualization
   vizSvg = d3.select("#viz-canvas").append("svg")
   .attr("width", $(window).width())
-  .attr("height", $(window).height());
+  .attr("height", $(window).height())
+
 
   // call draw if window is resized
   $(window).on("resize", _.debounce(function() {
-    vizSvg.attr("width", $(window).width());
+    vizSvg.attr("width", $(window).width())
     draw(txns);
   }, 500));
 });
@@ -132,7 +133,7 @@ var getAngle = function(increment, size, padding) {
 
 // }
 
-var radius = 300;
+var radius = 100;
 
 
 vizSvg.selectAll("line")
@@ -153,6 +154,7 @@ vizSvg.selectAll("line")
 		return Math.sin(getAngle(i))*(radius+getWidthFromSatoshis(d.payload.transaction.amount));
 	})
 	.attr("stroke","red")
+	.attr('transform','translate(' + $(window).width()/2 + ',' + $(window).height()/2 + ')' );
 	;
 
 
