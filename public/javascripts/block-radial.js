@@ -129,12 +129,19 @@ var getAngle = function(increment, size, padding) {
 	return radians;
 }
 
+var getWidthFromSatoshis = function(satoshis) {
+  var maxWidth = $(window).width();
+  var w = (satoshis / 1e8) * pixelsPerBtc;
+  w = (w > maxWidth)? maxWidth : w;
+  w = (w < minWidth)? minWidth : w;
+  return w;
+}
+
 // var translateAngleToCenter = function(x,y) {
 
 // }
 
 var radius = 100;
-
 
 vizSvg.selectAll("line")
 	.data(data)
@@ -154,8 +161,9 @@ vizSvg.selectAll("line")
 		return Math.sin(getAngle(i))*(radius+getWidthFromSatoshis(d.payload.transaction.amount));
 	})
 	.attr("stroke","red")
-	.attr('transform','translate(' + $(window).width()/2 + ',' + $(window).height()/2 + ')' );
-	;
+	.attr('transform','translate(' + $(window).width()/2 + ',' + $(window).height()/2 + ')' )
+  on()
+
 
 
 
