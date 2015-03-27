@@ -1,15 +1,26 @@
 var xy = [];
 
-var parseToXY(data) {
+var parseToXY = function(data) {
+	// var array = []
+	// if(!_.isEmpty(xy)) {
+	// 	array = _.map(xy,function(num,key){
+	// 		console.log(num)
+	// 		return num[2]
+	// 	})
+	// }
+
+	// console.log("array",array)
+
 	_.each(transactions,function(d,i) {
-		if(_.isUndefined(xy[d])) {
-			xy.push({
-				 {
-				 	id: d,
-					x: Math.random()*960,
-					y: Math.random()*500
-				}
-			})
+		console.log(d.hash)
+		if(!_.findWhere(xy,{"2":d.hash})) {
+			xy.push(
+				 [
+					Math.random()*960,
+					Math.random()*500,
+					d.hash
+				]
+			)
 		}
 	})
 }
@@ -21,14 +32,10 @@ var GetXY = function(hash) {
 
 var draw = function(data) {
 
-
+	parseToXY(data);
 
 	var width = 960,
 	    height = 500;
-
-	var vertices = d3.range(100).map(function(d) {
-	  return [Math.random() * width, Math.random() * height];
-	});
 
 	var voronoi = d3.geom.voronoi()
 	    .clipExtent([[0, 0], [width, height]]);
@@ -36,21 +43,21 @@ var draw = function(data) {
 	var svg = d3.select("body").append("svg")
 	    .attr("width", width)
 	    .attr("height", height)
-	    .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); });
+	    .on("mousemove", function() { xy[0] = d3.mouse(this); redraw(); });
 
 	var path = svg.append("g").selectAll("path");
 
 	svg.selectAll("circle")
-	    .data(vertices.slice(1))
+	    .data(xy.slice(1))
 	  .enter().append("circle")
-	    .attr("transform", function(d) { return "translate(" + d + ")"; })
+	    .attr("transform", function(d) { return "translate(" + d[0] + "," + d[1] + ")"; })
 	    .attr("r", 1.5);
 
 	redraw();
 
 	function redraw() {
 	  path = path
-	      .data(voronoi(vertices), polygon);
+	      .data(voronoi(xy), polygon);
 
 	  path.exit().remove();
 
@@ -65,3 +72,14 @@ var draw = function(data) {
 	  return "M" + d.join("L") + "Z";
 	}
 }
+
+
+
+
+var setup = function() {
+	draw();
+}
+
+$(document).ready(function(){
+	setup();
+})
