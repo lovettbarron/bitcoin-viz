@@ -2,6 +2,12 @@ var xy = [], nodes = [];
 var svg, path, voronoi, force, polygon;
 var bucketWidth = 960,
     bucketHeight = 500;
+var blockWidth = 960,
+	blockHeight = 50;
+
+var blockSvgs = [];
+
+var testBlocks = ["0000000000000000070ea877d0b45f31147575842562b1e09f6a1bd6e46f09ed","0000000000000000060577e744223eea22cd45597ca55b1e981ce19874be4f7b","000000000000000001a40ab7df60551364c33e4bade591dc946de26e23569418","00000000000000000580799b80ab02200454c02701023076208d2942a45197e9","00000000000000001641d325610619de2c3b1d7d4c04d7e2b88975faa99bd26a"]
 
 
 var getWidthFromSatoshis = function(satoshis) {
@@ -103,7 +109,7 @@ var redraw = function() {
 }
 
 
-var renderSingleBlock = function(hash) {
+var renderSingleBlock = function(blockHash) {
 
 
 
@@ -126,5 +132,8 @@ var setup = function() {
 
 $(document).ready(function(){
 	setup();
+	for(var i=0;i<testBlocks.length;i++) {
+		renderSingleBlock(testBlocks[i]);
+	}
 
 })
