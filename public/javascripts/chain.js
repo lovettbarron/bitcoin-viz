@@ -20,7 +20,7 @@ var GetBlockLevelTransactions = function(block) {
 		if(count>=1) { iter+=1; count = 0 }
 	})
 
-	console.log("r",request_hashes)
+	// console.log("r",request_hashes)
 
 	var iter = 0;
 	var query = setInterval(function() {
