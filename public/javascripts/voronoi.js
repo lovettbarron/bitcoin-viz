@@ -13,7 +13,7 @@ var blockSvgs = [], blockPath = [], blockTrans = [];
 var testBlocks = ["0000000000000000070ea877d0b45f31147575842562b1e09f6a1bd6e46f09ed","0000000000000000060577e744223eea22cd45597ca55b1e981ce19874be4f7b","000000000000000001a40ab7df60551364c33e4bade591dc946de26e23569418","00000000000000000580799b80ab02200454c02701023076208d2942a45197e9","00000000000000001641d325610619de2c3b1d7d4c04d7e2b88975faa99bd26a"]
 
 
-var getWidthFromSatoshis = function(satoshis, max, min) {
+var getWidthFromSatoshis = function(satoshis, min, max) {
   var maxWidth = !_.isUndefined(max) ? max : blockWidth/3;
   var minWidth = !_.isUndefined(min) ? min : 10;
   var w = (satoshis / 1e8) * 10;
@@ -107,10 +107,11 @@ var redraw = function() {
 	bucketSvg.selectAll("circle")
 	    .data(xy)
 	  .enter().append("circle")
-	    .attr("r", 1.5)
-	  .transition()
-		.ease(Math.sqrt)
-		.attr("r", 4.5);
+	    .attr("r", function(d) { return getWidthFromSatoshis(d.size,5,20)})
+	    .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+	 //  .transition()
+		// .ease(Math.sqrt)
+		// .attr("r", 4.5);
 
 	mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
 	_.each(mapToVoro, function(d,i){
@@ -129,34 +130,34 @@ var redraw = function() {
 
 	// There's a bug here with the data being fed in. Not sure of the source.
 	// Suspect an element of the bucketPath array is undefined, prob __data__ 
-	try {
-	bucketPath = bucketPath
-	  .data(
-	  	voroed,
-	  	function(d) {
-	  		// console.log(d)
-	  		return polygon(d);	
-		  	} 
-	  	)
-	} catch(e) {
-		console.log("xy len",xy.length)
-		console.log("Error in data struct")//, e.stack))
-		console.log("Trying to reset selection")
-		// Reselecting
-		// bucketPath = bucketSvg.append("g").selectAll("path");
-		// Filtering through selection and removing elements without valid data.
-		bucketPath.filter(function(d,i){
-			if(_.isUndefined(d)) d.remove()
-		})
-	}
+	// try {
+	// bucketPath = bucketPath
+	//   .data(
+	//   	voroed,
+	//   	function(d) {
+	//   		// console.log(d)
+	//   		return polygon(d);	
+	// 	  	} 
+	//   	)
+	// } catch(e) {
+	// 	console.log("xy len",xy.length)
+	// 	console.log("Error in data struct")//, e.stack))
+	// 	console.log("Trying to reset selection")
+	// 	// Reselecting
+	// 	// bucketPath = bucketSvg.append("g").selectAll("path");
+	// 	// Filtering through selection and removing elements without valid data.
+	// 	bucketPath.filter(function(d,i){
+	// 		if(_.isUndefined(d)) d.remove()
+	// 	})
+	// }
 
-	bucketPath.exit().remove();
+	// bucketPath.exit().remove();
 
-	bucketPath.enter().append("path")
-	  .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-	  .attr("d", polygon);
+	// bucketPath.enter().append("path")
+	//   .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+	//   .attr("d", polygon);
 
-	bucketPath.order();
+	// bucketPath.order();
 	force.start();
 }
 

@@ -67,8 +67,6 @@ var GetBlockLevelTransactions = function(block) {
 	},10)
 
 	blocks.push(block)
-	var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
-	document.dispatchEvent(newBlock);
 }
 
 var FetchTransactions = function(blockhash, last) {
@@ -100,6 +98,8 @@ var FetchBlock = function(blockhash) {
 			if(!_.findWhere(blocks,{"hash":blockhash})) {
 				blocks.push(data);
 	        	GetBlockLevelTransactions(data)
+	        	var newBlock = new CustomEvent("new-block",{ "detail": data.hash });
+				document.dispatchEvent(newBlock);
 	        }
         	return data
 		}
@@ -120,7 +120,7 @@ blockConn.onopen = function (ev) {
 // On Message
 blockConn.onmessage = function (ev) {
   var x = JSON.parse(ev.data);
-  if(x.payload.type !== "heartbeat") GetBlockLevelTransactions(x)
+  if(x.payload.type !== "heartbeat") GetBlockLevelTransactions(x.payload.block)
 };
 
 // On Close
@@ -147,8 +147,8 @@ txnConn.onmessage = function (ev) {
 	var newTrans = new CustomEvent("new-trans", { "detail": x.payload.transaction.hash });
   	document.dispatchEvent(newTrans);
   } else if (x.payload.type == "new-block") {
-  	// blocks.push(x.payload.block)
-  	// GetBlockLevelTransactions(x.payload.block);
+	// blocks.push(x.payload.block)
+	// GetBlockLevelTransactions(x.payload.block);
   }
 
 
@@ -181,10 +181,10 @@ var getBlockTransactions = function(hash) {
 var getBlockHeight = function(hash) {
 	var block = _.findWhere(blocks,{"hash":hash})
 	if(_.isUndefined(block)) {
-		block = FetchBlock(hash)
-		while(!_.isUndefined(block)) {
-			return block.height
-		}
+		// block = FetchBlock(hash)
+		// while(!_.isUndefined(block)) {
+		// 	return block.height
+		// }
 	} else {
 		return block.height
 	}
