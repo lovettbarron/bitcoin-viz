@@ -11,9 +11,9 @@ var blockSvgs = [], blockPath = [];
 var testBlocks = ["0000000000000000070ea877d0b45f31147575842562b1e09f6a1bd6e46f09ed","0000000000000000060577e744223eea22cd45597ca55b1e981ce19874be4f7b","000000000000000001a40ab7df60551364c33e4bade591dc946de26e23569418","00000000000000000580799b80ab02200454c02701023076208d2942a45197e9","00000000000000001641d325610619de2c3b1d7d4c04d7e2b88975faa99bd26a"]
 
 
-var getWidthFromSatoshis = function(satoshis) {
-  var maxWidth = blockWidth/3;
-  var minWidth = 10;
+var getWidthFromSatoshis = function(satoshis, max, min) {
+  var maxWidth = !_.isUndefined(max) ? max : blockWidth/3;
+  var minWidth = !_.isUndefined(min) ? min : 10;
   var w = (satoshis / 1e8) * 10;
   w = (w > maxWidth)? maxWidth : w;
   w = (w < minWidth)? minWidth : w;
@@ -32,11 +32,6 @@ var parseToXY = function(data) {
 		if(!_.findWhere(xy,{"id":d.hash})) {
 			var size = getTransactionAmount(d.hash)
 			xy.push(
-				//  [
-				// 	Math.random()*960,
-				// 	Math.random()*500,
-				// 	d.hash
-				// ]
 				{
 					x: Math.random()*bucketWidth,
 					y: Math.random()*bucketHeight,
@@ -46,10 +41,18 @@ var parseToXY = function(data) {
 			)
 		}
 	})
+}
 
-	// Clear bucket of confirmed
-
-
+var pruneXy = function(newBlock) {
+	console.log("Pruning xy")
+	_.each(newBlock.transaction_hashes,function(d,i){
+		if(_.findWhere(xy,{"id":d.hash})){
+			var index = xy.indexOf(_.findWhere(xy,{"id":d.hash}));
+			if(index!=-1) {
+				xy = xy.splice(index)
+			}
+		}
+	})
 }
 
 var GetXY = function(hash) {
@@ -89,10 +92,8 @@ var drawBucket = function() {
 var redraw = function() {
 
 	var unconfirmedTrans = _.where(transactions,{confirmations:0})
-	console.log("unconf",unconfirmedTrans)
 
 	if(transactions.length != xy.length) parseToXY(unconfirmedTrans);
-
 
 	bucketSvg.selectAll("circle")
 	    .data(GetXY)
@@ -162,6 +163,7 @@ var findXyReSatoshis = function(blockHash) {
 	var hashVals = [];
 	var BlockTrans = [];
 
+	getWidthFromSatoshis(val, 0.1, 1.0)
 
 
 
@@ -182,4 +184,16 @@ $(document).ready(function(){
 		renderSingleBlock(testBlocks[i]);
 	}
 
+
+	document.addEventListener("new-block", function(e) {
+		pruneXy(e.detail)
+	});
+
+	document.addEventListener("block-populated", function(e) {
+		console.log("Populated ", e.detail)
+	});
+
+	document.addEventListener("new-trans", function(e) {
+	  // console.log("new-trans-event",e.detail);
+	});
 })

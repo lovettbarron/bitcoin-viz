@@ -4,6 +4,11 @@ var blocks = [], transactions = [];
 var chain = 'https://api.chain.com/v2/bitcoin/' 
 var key = "010e57f20c6bd49cb01703706ff9bfc7";
 
+////////// Events /////////
+// Create the event
+// var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
+// var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
+// var newTrans = new CustomEvent("new-trans",{ "detail": trans.hash });
 
 
 
@@ -28,12 +33,17 @@ var GetBlockLevelTransactions = function(block) {
 	var iter = 0;
 	var query = setInterval(function() {
 		FetchTransactions(request_hashes[iter]);
-		if(iter>=request_hashes.length-1) { clearInterval(query) }
+		if(iter>=request_hashes.length-1) { 
+			var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
+			document.dispatchEvent(blockPopulated);
+			clearInterval(query) 
+		}
 		iter++;
 	},10)
 
 	blocks.push(block)
-
+	var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
+	document.dispatchEvent(newBlock);
 }
 
 var FetchTransactions = function(blockhash) {
@@ -76,7 +86,6 @@ blockConn.onopen = function (ev) {
 // On Message
 blockConn.onmessage = function (ev) {
   var x = JSON.parse(ev.data);
-  console.log("Block Msg",x)
   if(x.payload.type !== "heartbeat") GetBlockLevelTransactions(x)
 };
 
@@ -101,6 +110,8 @@ txnConn.onmessage = function (ev) {
   // console.log("Trans msg",x)
   if(x.payload.type == "new-transaction") {
   	transactions.push(x.payload.transaction)
+	var newTrans = new CustomEvent("new-trans", { "detail": x.payload.transaction.hash });
+  	document.dispatchEvent(newTrans);
   } else if (x.payload.type == "new-block") {
   	// blocks.push(x.payload.block)
   	// GetBlockLevelTransactions(x.payload.block);
@@ -125,4 +136,8 @@ var getTransactionAmount = function(hash) {
 	var amount;
 	var t = _.findWhere(transactions,{"hash":hash})
 	return _.isUndefined(t) ? 0 : t.amount;//*.0000001
+}
+
+var getBlockTransactions = function(hash) {
+	return _.findWhere(blocks,{"hash":hash})
 }
