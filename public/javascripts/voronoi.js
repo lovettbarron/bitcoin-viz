@@ -1,11 +1,11 @@
 var xy = [], nodes = [];
 var svg, path, voronoi, force, polygon;
-var width = 960,
-    height = 500;
+var bucketWidth = 960,
+    bucketHeight = 500;
 
 
 var getWidthFromSatoshis = function(satoshis) {
-  var maxWidth = 400;
+  var maxWidth = 350;
   var minWidth = 10;
   var w = (satoshis / 1e8) * 10;
   w = (w > maxWidth)? maxWidth : w;
@@ -14,10 +14,6 @@ var getWidthFromSatoshis = function(satoshis) {
 }
 
 var tick = function() {
-  // _.each(xy,function(d,i) {
-  // 	// xy[i][0] += .1;
-  // 	// xy[i][1] += .1;
-  // })
   svg.selectAll("circle")
       .attr("cx", function(d) { return d.x; })
       .attr("cy", function(d) { return d.y; });
@@ -49,15 +45,13 @@ var GetXY = function(hash) {
 	return !_.isUndefined ? {x: x, y: y} : {x: 0, y: 0};
 }
 
-var draw = function(data) {
-
+var draw = function(data, target) {
 	voronoi = d3.geom.voronoi()
 	    .clipExtent([[0, 0], [width, height]]);
 	
 	force = d3.layout.force()
 	    .charge(function(d){
 	    	var amt = getTransactionAmount(d.id);
-	    	console.log(getWidthFromSatoshis(amt))
 	    	return -getWidthFromSatoshis(amt)
 	    })
 		// .charge(-20)
@@ -71,6 +65,7 @@ var draw = function(data) {
 
 var polygon = function(d) {
 	// console.log(d)
+  if(d.length < 1) return
   return "M" + d.join("L") + "Z";
 }
 
@@ -88,6 +83,7 @@ var redraw = function() {
 		.attr("r", 4.5);
 
 	var mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
+	// There's a bug here with the data being fed in. Not sure of the source.
 	path = path
 	  .data(
 	  	voronoi(mapToVoro), 
@@ -97,13 +93,21 @@ var redraw = function() {
 	path.exit().remove();
 	path.enter().append("path")
 	  .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-	  .attr("d", polygon);
+	  .attr("d", polygon)
+	  .on('hover', function(d){
+	  	console.log("hovering")
+	  });
 
 	path.order();
 	force.start();
 }
 
 
+var renderSingleBlock = function(hash) {
+
+
+
+}
 
 
 var setup = function() {
@@ -117,7 +121,7 @@ var setup = function() {
 	var interval = setInterval(function() {
 		force.start();
 		redraw();
-	}, 60);
+	}, 120);
 }
 
 $(document).ready(function(){
