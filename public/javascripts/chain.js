@@ -5,11 +5,36 @@ var chain = 'https://api.chain.com/v2/bitcoin/'
 var key = "010e57f20c6bd49cb01703706ff9bfc7";
 
 ////////// Events /////////
-// Create the event
-// var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
-// var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
-// var newTrans = new CustomEvent("new-trans",{ "detail": trans.hash });
+// Create the event, these are just for sprinkling around as need be.
+// This dock will fire the below events appropriately, 
+// so use the listeners in your applications
+/*
+// Fires when a new block comes in
+var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
+document.dispatchEvent(newBlock);
 
+// Fires when a block is populated with transactions (i.e. the transactions array)
+// This is especially useful when calling historical blocks
+var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
+document.dispatchEvent(blockPopulated);
+
+// Fires when a new transaction comes in
+var newTrans = new CustomEvent("new-trans",{ "detail": trans.hash });
+document.dispatchEvent(blockPopulated);
+
+// Listeners
+document.addEventListener("new-block", function(e) {
+	console.log("New block", e.detail);
+});
+
+document.addEventListener("block-populated", function(e) {
+	console.log("Populated ", e.detail)
+});
+
+document.addEventListener("new-trans", function(e) {
+  console.log("new-trans-event",e.detail);
+});
+*/
 
 
 ///////////////////////////////////////////////////////////
