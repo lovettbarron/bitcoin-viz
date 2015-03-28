@@ -3,6 +3,16 @@ var svg, path, voronoi, force, polygon;
 var width = 960,
     height = 500;
 
+
+var getWidthFromSatoshis = function(satoshis) {
+  var maxWidth = 400;
+  var minWidth = 10;
+  var w = (satoshis / 1e8) * 10;
+  w = (w > maxWidth)? maxWidth : w;
+  w = (w < minWidth)? minWidth : w;
+  return w;
+}
+
 var tick = function() {
   // _.each(xy,function(d,i) {
   // 	// xy[i][0] += .1;
@@ -27,7 +37,7 @@ var parseToXY = function(data) {
 					x: Math.random()*960,
 					y: Math.random()*500,
 					id: d.hash,
-					size: -20// getTransactionAmount(!_.isUndefined(size) ? size : -10 )
+					size: getTransactionAmount(size)
 				}
 			)
 		}
@@ -47,7 +57,8 @@ var draw = function(data) {
 	force = d3.layout.force()
 	    .charge(function(d){
 	    	var amt = getTransactionAmount(d.id);
-	    	return -20
+	    	console.log(getWidthFromSatoshis(amt))
+	    	return -getWidthFromSatoshis(amt)
 	    })
 		// .charge(-20)
 	    .size([width, height])
@@ -59,7 +70,7 @@ var draw = function(data) {
 }
 
 var polygon = function(d) {
-	console.log(d)
+	// console.log(d)
   return "M" + d.join("L") + "Z";
 }
 
@@ -106,7 +117,7 @@ var setup = function() {
 	var interval = setInterval(function() {
 		force.start();
 		redraw();
-	}, 300);
+	}, 60);
 }
 
 $(document).ready(function(){

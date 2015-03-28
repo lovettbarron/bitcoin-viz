@@ -56,21 +56,17 @@ path {
   stroke: #fff;
 }
 
-path:first-child {
-  fill: yellow !important;
-}
-
 circle {
   fill: #000;
   pointer-events: none;
 }
 
 .q0-9 { fill: rgb(10,10,10); }
-.q1-9 { fill: rgb(50,119,174); }
-.q2-9 { fill: rgb(70,182,218); }
-.q3-9 { fill: rgb(100,224,239); }
-.q4-9 { fill: rgb(120,247,247); }
-.q5-9 { fill: rgb(140,245,208); }
-.q6-9 { fill: rgb(160,225,134); }
-.q7-9 { fill: rgb(180,188,65); }
-.q8-9 { fill: rgb(200,146,33); }
+.q1-9 { fill: rgb(50,50,50); }
+.q2-9 { fill: rgb(70,70,70); }
+.q3-9 { fill: rgb(100,100,100); }
+.q4-9 { fill: rgb(120,120,120); }
+.q5-9 { fill: rgb(140,140,140); }
+.q6-9 { fill: rgb(160,160,160); }
+.q7-9 { fill: rgb(180,180,180); }
+.q8-9 { fill: rgb(200,200,200); }
