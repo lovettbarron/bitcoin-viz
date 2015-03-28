@@ -1,4 +1,4 @@
-var xy = [], nodes = [];
+var xy = [];
 var bucketSvg,bucketPath, bucketVoronoi, force, polygon;
 var svg, path, voronoi;
 var bucketWidth = 960,
@@ -6,7 +6,9 @@ var bucketWidth = 960,
 var blockWidth = 960,
 	blockHeight = 50;
 
-var blockSvgs = [], blockPath = [];
+var mapToVoro, voroed;
+
+var blockSvgs = [], blockPath = [], blockTrans = [];
 
 var testBlocks = ["0000000000000000070ea877d0b45f31147575842562b1e09f6a1bd6e46f09ed","0000000000000000060577e744223eea22cd45597ca55b1e981ce19874be4f7b","000000000000000001a40ab7df60551364c33e4bade591dc946de26e23569418","00000000000000000580799b80ab02200454c02701023076208d2942a45197e9","00000000000000001641d325610619de2c3b1d7d4c04d7e2b88975faa99bd26a"]
 
@@ -26,15 +28,16 @@ var tick = function() {
       .attr("cy", function(d) { return d.y; });
 }
 
-var parseToXY = function(data) {
+var parseToXY = function(data, width, height) {
 	// Add new unconfirmed to the bucket
+
 	_.each(data,function(d,i) {
 		if(!_.findWhere(xy,{"id":d.hash})) {
 			var size = getTransactionAmount(d.hash)
 			xy.push(
 				{
-					x: Math.random()*bucketWidth,
-					y: Math.random()*bucketHeight,
+					x: Math.random()*width,
+					y: Math.random()*height,
 					id: d.hash,
 					size: getTransactionAmount(size)
 				}
@@ -43,9 +46,15 @@ var parseToXY = function(data) {
 	})
 }
 
-var pruneXy = function(newBlock) {
-	console.log("Pruning xy")
-	_.each(newBlock.transaction_hashes,function(d,i){
+var pruneXy = function(newBlockHash) {
+	console.log("Pruning xy", xy.length)
+	var block = _.findWhere(blocks,{"hash":newBlockHash})
+	if(_.isUndefined(block)){
+		console.log("Couldn't find block",newBlockHash)
+		return
+	}
+
+	_.each(block.transaction_hashes,function(d,i){
 		if(_.findWhere(xy,{"id":d.hash})){
 			var index = xy.indexOf(_.findWhere(xy,{"id":d.hash}));
 			if(index!=-1) {
@@ -53,6 +62,7 @@ var pruneXy = function(newBlock) {
 			}
 		}
 	})
+	console.log("new length post prune", xy.length)
 }
 
 var GetXY = function(hash) {
@@ -61,8 +71,7 @@ var GetXY = function(hash) {
 }
 
 var polygon = function(d) {
-	// console.log(d)
-  if(d.length < 1) return
+  if(d.length < 1 || _.isUndefined(d)) return
   return "M" + d.join("L") + "Z";
 }
 
@@ -93,25 +102,56 @@ var redraw = function() {
 
 	var unconfirmedTrans = _.where(transactions,{confirmations:0})
 
-	if(transactions.length != xy.length) parseToXY(unconfirmedTrans);
+	if(transactions.length != xy.length) parseToXY(unconfirmedTrans, bucketWidth, bucketHeight);
 
 	bucketSvg.selectAll("circle")
-	    .data(GetXY)
+	    .data(xy)
 	  .enter().append("circle")
 	    .attr("r", 1.5)
 	  .transition()
 		.ease(Math.sqrt)
 		.attr("r", 4.5);
 
-	var mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
+	mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
+	_.each(mapToVoro, function(d,i){
+		if(_.isNaN(d[0]) || _.isNaN(d[1])) {
+			console.log("NAN DETECTED")
+			mapToVoro.splice(i)
+		}
+		if(_.isUndefined(d[0]) || _.isUndefined(d[1])) {
+			console.log("UNDEFINED DETECTED")
+			mapToVoro.splice(i)
+		}
+	})
+
+	voroed = bucketVoronoi(mapToVoro);
+
+
 	// There's a bug here with the data being fed in. Not sure of the source.
+	// Suspect an element of the bucketPath array is undefined, prob __data__ 
+	try {
 	bucketPath = bucketPath
 	  .data(
-	  	bucketVoronoi(mapToVoro), 
-	  	polygon
-	  	);
+	  	voroed,
+	  	function(d) {
+	  		// console.log(d)
+	  		return polygon(d);	
+		  	} 
+	  	)
+	} catch(e) {
+		console.log("xy len",xy.length)
+		console.log("Error in data struct")//, e.stack))
+		console.log("Trying to reset selection")
+		// Reselecting
+		// bucketPath = bucketSvg.append("g").selectAll("path");
+		// Filtering through selection and removing elements without valid data.
+		bucketPath.filter(function(d,i){
+			if(_.isUndefined(d)) d.remove()
+		})
+	}
 
 	bucketPath.exit().remove();
+
 	bucketPath.enter().append("path")
 	  .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
 	  .attr("d", polygon);
@@ -131,7 +171,7 @@ var setupBucket = function() {
 	var interval = setInterval(function() {
 		force.start();
 		redraw();
-	}, 120);
+	}, 60);
 }
 
 ///////////////////////////////////////////////////////////
@@ -143,7 +183,7 @@ var setupBucket = function() {
 
 var renderSingleBlock = function(blockHash) {
 	var newBlock = d3.select("body").append("svg")
-		.attr("id",blockHash)
+		.attr("id",getBlockHeight(blockHash))
 		.attr("class","block")
 	    .attr("width", blockWidth)
 	    .attr("height", blockHeight)
@@ -156,20 +196,67 @@ var renderSingleBlock = function(blockHash) {
 		.select("id",blockHash)
 		.append("g")
 		.selectAll("path");
+
+    var block = getBlock(blockHash)
+
+	blockTrans.push({
+		id: blockHash,
+		count: 0,
+		expect: block.transaction_hashes.length
+	})
 }
 
-var findXyReSatoshis = function(blockHash) {
-	var orderedTransactions = [];
-	var hashVals = [];
-	var BlockTrans = [];
+var drawCompletedBlock = function(blockHash) {
+	var svg = d3.selectAll('svg').filter(function(d){
+		if(this.id == getBlockHeight(blockHash)) return this
+	})
 
-	getWidthFromSatoshis(val, 0.1, 1.0)
-
-
-
-	return orderedTransactions
+	var t = _.where(transactions,{"block_hash":blockHash})
+	var coords = parseForBlock(t,blockWidth,10)
+	// console.log(coords)
+	svg.selectAll("circle")
+	    .data(coords)
+	  .enter().append("circle")
+	    .attr("r", 1.5)
+	    .attr("cx",function(d){
+	    	return d.x
+	    })
+	    .attr("cy", function(d){
+	    	return d.y
+	    })
+		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
 }
 
+var findRatioViaSatoshis = function(transaction_hash) {
+	var val = getTransactionAmount(transaction_hash);
+	return getWidthFromSatoshis(val, 0.1, 1.0)
+}
+
+var parseForBlock = function(data, width, height) {
+	var arr = [];
+	_.each(data,function(d,i) {
+		var size = getTransactionAmount(d.hash)
+		arr.push(
+			{
+				x: i+findRatioViaSatoshis(d.hash),
+				y: Math.random()*height,
+				id: d.hash,
+				size: getTransactionAmount(size)
+			}
+		)
+	})
+	return arr
+}
+
+var checkForUpdatedTransactionsArray = function() {
+	_.each(blockTrans, function(d,i) {
+		if(d.count !== d.expect) {
+			var t = _.where(transactions,{"block_hash":d.id})
+			d.count = t.length;
+			drawCompletedBlock(d.id)
+		}
+	})
+}
 
 
 ///////////////////////////////////////////////////////////
@@ -181,16 +268,20 @@ $(document).ready(function(){
 	setupBucket	();
 	for(var i=0;i<testBlocks.length;i++) {
 		FetchBlock(testBlocks[i]);
-		renderSingleBlock(testBlocks[i]);
 	}
 
+	var updateBlocks = setInterval(function(){
+		checkForUpdatedTransactionsArray();
+	},1000)
 
 	document.addEventListener("new-block", function(e) {
 		pruneXy(e.detail)
+		renderSingleBlock(e.detail);
 	});
 
 	document.addEventListener("block-populated", function(e) {
 		console.log("Populated ", e.detail)
+		drawCompletedBlock(e.detail);
 	});
 
 	document.addEventListener("new-trans", function(e) {

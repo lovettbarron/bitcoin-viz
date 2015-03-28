@@ -57,10 +57,10 @@ var GetBlockLevelTransactions = function(block) {
 
 	var iter = 0;
 	var query = setInterval(function() {
-		FetchTransactions(request_hashes[iter]);
+		FetchTransactions(request_hashes[iter],request_hashes.length-1==iter ? true : false);
 		if(iter>=request_hashes.length-1) { 
-			var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
-			document.dispatchEvent(blockPopulated);
+			// var blockPopulated = new CustomEvent("block-populated",{ "detail": block.hash });
+			// document.dispatchEvent(blockPopulated);
 			clearInterval(query) 
 		}
 		iter++;
@@ -71,14 +71,20 @@ var GetBlockLevelTransactions = function(block) {
 	document.dispatchEvent(newBlock);
 }
 
-var FetchTransactions = function(blockhash) {
+var FetchTransactions = function(blockhash, last) {
 	var fullURL = chain + "transactions/" + blockhash
+	if(_.isUndefined(blockhash)) return
 	$.ajax({
 		url: fullURL,
 		data: {'api-key-id': key},
 		type: 'GET',
 		success: function(data) {
         	transactions.push(data);
+        	// Not a good solution, assumes first in, first out
+        	if(last) {
+        		var blockPopulated = new CustomEvent("block-populated",{ "detail": blockhash });
+				document.dispatchEvent(blockPopulated);
+        	}
 		}
 	})
 		
@@ -91,10 +97,13 @@ var FetchBlock = function(blockhash) {
 		data: {'api-key-id': key},
 		type: 'GET',
 		success: function(data) {
-			blocks.push(data);
-        	GetBlockLevelTransactions(data)
+			if(!_.findWhere(blocks,{"hash":blockhash})) {
+				blocks.push(data);
+	        	GetBlockLevelTransactions(data)
+	        }
+        	return data
 		}
-	})		
+	})
 }
 
 ///////////////////////////////////////////////////////////
@@ -164,5 +173,23 @@ var getTransactionAmount = function(hash) {
 }
 
 var getBlockTransactions = function(hash) {
-	return _.findWhere(blocks,{"hash":hash})
+	var block = _.findWhere(blocks,{"hash":hash})
+	return block.transaction_hashes;
+}
+
+// Err, rewrite this
+var getBlockHeight = function(hash) {
+	var block = _.findWhere(blocks,{"hash":hash})
+	if(_.isUndefined(block)) {
+		block = FetchBlock(hash)
+		while(!_.isUndefined(block)) {
+			return block.height
+		}
+	} else {
+		return block.height
+	}
+}
+
+var getBlock = function(hash) {
+	return _.findWhere(blocks,{"hash":hash});
 }
