@@ -61,6 +61,10 @@ circle {
   pointer-events: none;
 }
 
+svg.block {
+  border: 1px solid white;
+}
+
 .q0-9 { fill: rgb(10,10,10); }
 .q1-9 { fill: rgb(50,50,50); }
 .q2-9 { fill: rgb(70,70,70); }

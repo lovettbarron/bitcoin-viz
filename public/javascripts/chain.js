@@ -1,7 +1,10 @@
 var blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
+var txnConn = new WebSocket("wss://ws.chain.com/v2/notifications");
 var blocks = [], transactions = [];
 var chain = 'https://api.chain.com/v2/bitcoin/' 
 var key = "010e57f20c6bd49cb01703706ff9bfc7";
+
+
 
 
 ///////////////////////////////////////////////////////////
@@ -28,6 +31,8 @@ var GetBlockLevelTransactions = function(block) {
 		if(iter>=request_hashes.length-1) { clearInterval(query) }
 		iter++;
 	},10)
+
+	blocks.push(block)
 
 }
 
@@ -58,7 +63,7 @@ var FetchBlock = function(blockhash) {
 }
 
 ///////////////////////////////////////////////////////////
-///////////////////////   Connect   ///////////////////////
+/////////////////   Connect block   ///////////////////////
 ///////////////////////////////////////////////////////////
 // On Open
 blockConn.onopen = function (ev) {
@@ -71,12 +76,43 @@ blockConn.onopen = function (ev) {
 // On Message
 blockConn.onmessage = function (ev) {
   var x = JSON.parse(ev.data);
-  console.log("got message",x)
+  console.log("Block Msg",x)
   if(x.payload.type !== "heartbeat") GetBlockLevelTransactions(x)
 };
 
 // On Close
 blockConn.onclose = function (ev) {
+  console.log("blockConn closed");
+  blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
+};
+
+///////////////////////////////////////////////////////////
+/////////////////   Connect NewTrans   ///////////////////////
+///////////////////////////////////////////////////////////
+// On Open
+txnConn.onopen = function (ev) {
+  var req = {type: "new-transaction", block_chain: "bitcoin"};
+  txnConn.send(JSON.stringify(req));
+};
+
+// On Message
+txnConn.onmessage = function (ev) {
+  var x = JSON.parse(ev.data);
+  // console.log("Trans msg",x)
+  if(x.payload.type == "new-transaction") {
+  	transactions.push(x.payload.transaction)
+  } else if (x.payload.type == "new-block") {
+  	// blocks.push(x.payload.block)
+  	// GetBlockLevelTransactions(x.payload.block);
+  }
+
+
+
+  // if(x.payload.type !== "heartbeat") 
+};
+
+// On Close
+txnConn.onclose = function (ev) {
   console.log("blockConn closed");
   blockConn = new WebSocket("wss://ws.chain.com/v2/notifications");
 };
