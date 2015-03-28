@@ -39,7 +39,7 @@ var parseToXY = function(data, width, height) {
 					x: Math.random()*width,
 					y: Math.random()*height,
 					id: d.hash,
-					size: getTransactionAmount(size)
+					size: size
 				}
 			)
 		}
@@ -48,7 +48,9 @@ var parseToXY = function(data, width, height) {
 
 var pruneXy = function(newBlockHash) {
 	console.log("Pruning xy", xy.length)
+	
 	var block = _.findWhere(blocks,{"hash":newBlockHash})
+	
 	if(_.isUndefined(block)){
 		console.log("Couldn't find block",newBlockHash)
 		return
@@ -57,8 +59,9 @@ var pruneXy = function(newBlockHash) {
 	_.each(block.transaction_hashes,function(d,i){
 		if(_.findWhere(xy,{"id":d.hash})){
 			var index = xy.indexOf(_.findWhere(xy,{"id":d.hash}));
+			console.log("removing " + d.hash + " at " + index)
 			if(index!=-1) {
-				xy = xy.splice(index)
+				xy = xy.splice(index,1)
 			}
 		}
 	})
@@ -104,11 +107,13 @@ var redraw = function() {
 
 	if(transactions.length != xy.length) parseToXY(unconfirmedTrans, bucketWidth, bucketHeight);
 
-	bucketSvg.selectAll("circle")
+	var focus = bucketSvg.selectAll("circle")
 	    .data(xy)
-	  .enter().append("circle")
+
+	focus.enter().append("circle")
 	    .attr("r", function(d) { return getWidthFromSatoshis(d.size,5,20)})
 	    .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+    focus.exit().remove();
 	 //  .transition()
 		// .ease(Math.sqrt)
 		// .attr("r", 4.5);
