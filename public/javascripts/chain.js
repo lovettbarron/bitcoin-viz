@@ -60,6 +60,8 @@ var GetBlockLevelTransactions = function(block) {
 	var iter=0, count=0;
 
 	_.each(hashes, function(d,i) {
+		var match = _.findWhere(transactions,{"hash":d})
+		if(!_.isUndefined(match)) match.confirmations = 1
 		if(count==0) request_hashes[iter] = "";
 		request_hashes[iter] += count==0 ? d : "," + d
 		count++;
