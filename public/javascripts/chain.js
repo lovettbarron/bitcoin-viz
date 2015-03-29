@@ -4,6 +4,10 @@ var blocks = [], transactions = [];
 var chain = 'https://api.chain.com/v2/bitcoin/' 
 var key = "010e57f20c6bd49cb01703706ff9bfc7";
 
+var currentBlockchainHeight = function() {
+
+}
+
 ////////// Events /////////
 // Create the event, these are just for sprinkling around as need be.
 // This dock will fire the below events appropriately, 
@@ -42,9 +46,15 @@ document.addEventListener("new-trans", function(e) {
 ///////////////////////////////////////////////////////////
 var GetBlockLevelTransactions = function(block) {
 	if(_.isUndefined(block)) { console.log("No block"); return;}
-	console.log("got block",block)
+	// console.log("got block",block)
+	if(!_.isUndefined(_.findWhere(blocks,{"hash":block.hash}))) {
+		console.log("Exists already")
+		return
+	}
 	blocks.push(block)
-	
+	blocks = _.sortBy(blocks,'height')
+	blocks = blocks.reverse();
+
 	var hashes = block.transaction_hashes;
 	var request_hashes = [];
 	var iter=0, count=0;
@@ -98,7 +108,7 @@ var FetchBlock = function(blockhash) {
 		type: 'GET',
 		success: function(data) {
 			if(!_.findWhere(blocks,{"hash":blockhash})) {
-				blocks.push(data);
+				// blocks.push(data);
 	        	GetBlockLevelTransactions(data)
 	        }
         	return data

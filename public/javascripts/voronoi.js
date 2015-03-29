@@ -5,6 +5,7 @@ var bucketWidth = 960,
     bucketHeight = 500;
 var blockWidth = 960,
 	blockHeight = 50;
+var info;
 
 var mapToVoro, voroed;
 
@@ -164,7 +165,7 @@ var redraw = function() {
 }
 
 var setupBucket = function() {
-	bucketSvg = d3.select("body").append("svg")
+	bucketSvg = d3.select(".bucket").append("svg")
 	    .attr("width", bucketWidth)
 	    .attr("height", bucketHeight)
 	    // .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); });
@@ -191,10 +192,47 @@ var tick = function() {
 	// but since block transactions don't change
 	// we find the x/y values ones, and then clear those arrays
 
+var setupSorting = function() {
+	d3.select('.blocks').on("click",resortBlocks)
+}
+
+var resortBlocks = function() {
+	console.log("resort")
+    d3.select(".blocks").selectAll("svg").sort(function(a, b) {
+    		var blockList = _.pluck(blocks,"height")
+    		console.log(a,b)
+			return d3.descending(a.height,b.height);
+	    })
+		.transition().duration(500)
+}
+
 var renderSingleBlock = function(blockHash) {
-	var newBlock = d3.select("body").append("svg")
-		.attr("id",getBlockHeight(blockHash))
-		.attr("class","block")
+
+	// var newBlock = d3.select(".blocks").insert("svg",function(){
+	// 		// Figures out block height
+	// 		var blockIndex = _.indexOf(blocks, getBlock(blockHash));
+	// 		// Either appends (leaves blank) if unidentified or prepends before preceding block
+	// 		var sel = _.isUndefined(blocks[blockIndex+1]) ? "" : '#height'+blocks[blockIndex+1].height
+	// 		// Double check that the element exists to be prepended to.
+
+			
+
+	// 		if(_.isEmpty(d3.select(".blocks").selectAll(sel))) sel = "svg:first-child"
+	// 		console.log("Selection", sel)
+	// 		var target = d3.select(sel)
+	// 		console.log("target",target)
+
+	// 		if(d3.select('.blocks').selectAll("svg") == 0) {
+	// 			return ""
+	// 		} else { return target }
+
+	// 	})
+	// This works better: is based off of blocks data, vs. distinct SVGs
+	var newBlock = d3.select(".blocks").append("svg")
+		.data(blocks)
+		.attr("id",function(d) { return "height" + getBlockHeight(d.hash)})
+		.attr("class", "block")
+		// .attr("class","block")
 	    .attr("width", blockWidth)
 	    .attr("height", blockHeight)
 
@@ -202,13 +240,8 @@ var renderSingleBlock = function(blockHash) {
 	voronoi = _.isUndefined(voronoi) ? d3.geom.voronoi()
 	    .clipExtent([[0, 0], [blockWidth, blockHeight]]) : voronoi;
 
-	path = d3.selectAll("svg")
-		.select("id",blockHash)
-		.append("g")
-		.selectAll("path");
-
     var block = getBlock(blockHash)
-
+    if(_.findWhere(blockTrans,{"id":blockHash})) return
 	blockTrans.push({
 		id: blockHash,
 		count: 0,
@@ -223,7 +256,7 @@ var drawCompletedBlock = function(blockHash) {
 
 	var t = _.where(transactions,{"block_hash":blockHash})
 	var coords = parseForBlock(t,blockWidth,blockHeight,blockHash)
-	// console.log(coords)
+
 	svg.selectAll("circle")
 	    .data(coords)
 	  .enter().append("circle")
@@ -236,7 +269,7 @@ var drawCompletedBlock = function(blockHash) {
 	    })
 		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
 		.on("mouseover",mouseOverTransaction)
-		.on("mouseout",mouseOutransaction)
+		.on("mouseout",mouseOutTransaction)
 }
 
 var findRatioViaSatoshis = function(transaction_hash) {
@@ -247,6 +280,7 @@ var findRatioViaSatoshis = function(transaction_hash) {
 var parseForBlock = function(data, width, height, blockhash) {
 	var arr = [];
 	var bd = _.findWhere(blockTrans,{"id":blockhash});
+	if(_.isUndefined(bd)) return
 	var ratio = blockWidth / bd.expect
 	_.each(data,function(d,i) {
 		var size = getTransactionAmount(d.hash)
@@ -278,14 +312,19 @@ var checkForUpdatedTransactionsArray = function() {
 ///////////		 Interactive components		 //////////////
 ///////////////////////////////////////////////////////////
 
+var setupInfoBox = function() {
+	info = d3.select(".hover")
+}
+
 var mouseOverTransaction = function(d){
-	div.transition()        
-		.duration(200)      
+	info.transition()        
+		.duration(200)
 		.style("opacity", .9);  
+
 }
 
 var mouseOutTransaction = function(d){
-	div.transition()        
+	info.transition()        
 		.duration(300)      
 		.style("opacity", 0);   
 }
@@ -296,7 +335,9 @@ var mouseOutTransaction = function(d){
 
 
 $(document).ready(function(){
-	setupBucket	();
+	setupBucket();
+	setupInfoBox();
+	setupSorting();
 	for(var i=0;i<testBlocks.length;i++) {
 		FetchBlock(testBlocks[i]);
 	}
