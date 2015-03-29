@@ -203,3 +203,7 @@ var getBlockHeight = function(hash) {
 var getBlock = function(hash) {
 	return _.findWhere(blocks,{"hash":hash});
 }
+
+var getTrans = function(hash) {
+	return _.findWhere(transactions,{"hash":hash})
+}

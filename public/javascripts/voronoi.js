@@ -110,6 +110,9 @@ var redraw = function() {
 	focus.enter().append("circle")
 	    .attr("r", function(d) { return getWidthFromSatoshis(d.size,5,20)})
 	    .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+	    .on('mouseover',mouseOverTransaction)
+		.on('mouseout',mouseOutTransaction)
+		
     focus.exit().remove();
 	 //  .transition()
 		// .ease(Math.sqrt)
@@ -248,24 +251,54 @@ var drawCompletedBlock = function(blockHash) {
 	var t = _.where(transactions,{"block_hash":blockHash})
 	var coords = parseForBlock(t,blockWidth,blockHeight,blockHash)
 
-	svg.selectAll("circle")
+	var rects = 
+	svg.selectAll("rect")
 	    .data(coords)
-	  .enter().append("circle")
-	    .attr("r", 4.5)
-	    .attr("cx",function(d){
+	  .enter()
+
+	rects.append("rect")
+	    .attr("x",function(d){
 	    	return 0
 	    })
-	    .attr("cy", function(d){
+	    .attr("y", function(d){
 	    	return d.y
 	    })
+	    .attr("width",function(d) {
+	     	return getWidthFromSatoshis(d.size,5,20)
+	    })
+	    .attr("height", function(d){
+	    	return blockHeight
+	    })
 		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+		.on('mouseover',mouseOverTransaction)
+		.on('mouseout',mouseOutTransaction)
 		.transition()
 		    .duration(function(){
 		    	return 500 + (Math.random()*200)
 		    })
-	    .attr("cx",function(d){
+	    .attr("x",function(d){
 	    	return d.x
 	    })
+
+
+	// svg.selectAll("circle")
+	//     .data(coords)
+	//   .enter().append("circle")
+	//     .attr("r", 4.5)
+	//     .attr("cx",function(d){
+	//     	return 0
+	//     })
+	//     .attr("cy", function(d){
+	//     	return d.y
+	//     })
+	// 	.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+	// 	.transition()
+	// 	    .duration(function(){
+	// 	    	return 500 + (Math.random()*200)
+	// 	    })
+	//     .attr("cx",function(d){
+	//     	return d.x
+	//     })
 		// .on("mouseover",mouseOverTransaction)
 		// .on("mouseout",mouseOutTransaction)
 }
@@ -315,7 +348,13 @@ var setupInfoBox = function() {
 }
 
 var mouseOverTransaction = function(d){
-	console.log("mouse",d)
+	console.log("mousein",d)
+
+	var trans = getTrans(d.id)
+
+	info.select('.hash').html(trans.hash);
+	info.select('.amt').html(trans.amount*.0000001);
+
 	info.transition()        
 		.duration(200)
 		.style("opacity", .9);  
@@ -323,6 +362,7 @@ var mouseOverTransaction = function(d){
 }
 
 var mouseOutTransaction = function(d){
+	// console.log("mouseout",d)
 	info.transition()        
 		.duration(300)      
 		.style("opacity", 0);   
@@ -363,6 +403,7 @@ $(document).ready(function(){
 			count: 0,
 			expect: block.transaction_hashes.length
 		})
+		// resortBlocks()
 	});
 
 	document.addEventListener("block-populated", function(e) {

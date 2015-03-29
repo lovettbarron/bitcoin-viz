@@ -126,4 +126,11 @@ svg.block {
   background: rgb(100,100,120);
   opacity: 0;
   /*display: none;*/
+
+}
+
+.hover > div {
+  display: block;
+  float: left;
+  clear: both;
 }
