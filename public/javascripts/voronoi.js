@@ -199,16 +199,13 @@ var resortBlocks = function() {
 	console.log("resort")
     d3.select(".blocks").selectAll("svg").sort(function(a, b) {
     		var blockList = _.pluck(blocks,"height")
-    		console.log("a",a.height)
-    		console.log("b",b.height)
 			return d3.descending(a.height,b.height);
 	    })
 		.transition().duration(500)
 }
 
 var setupBlocks = function() {
-	blockSet = d3.selectAll(".blocks")
-	refreshBlocks();
+	blockSet = d3.select(".blocks")
 
 	// This is an engine, should work for all blocks as they're drawn	
 	voronoi = _.isUndefined(voronoi) ? d3.geom.voronoi()
@@ -217,18 +214,24 @@ var setupBlocks = function() {
 
 var refreshBlocks = function() {
 
-	blockSet.data(blocks).enter()
+	blockSet.selectAll("svg")
+	.data(blocks)
+	.enter()
 		.append("svg")
 		.attr("id",function(d) { return "height" + getBlockHeight(d.hash)})
 		.attr("class", "block")
 	    .attr("width", blockWidth)
-	    .attr("height", blockHeight)	
-	resortBlocks();
+	    .attr("height", 0)
+	    .transition()
+	    .duration(500)
+	    .attr("height", blockHeight)
+
+	// resortBlocks();
 }
 
 var drawCompletedBlock = function(blockHash) {
 	var svg = d3.selectAll('svg').filter(function(d){
-		if(this.id == getBlockHeight(blockHash)) return this
+		if(this.id == "height"+getBlockHeight(blockHash)) return this
 	})
 
 	var t = _.where(transactions,{"block_hash":blockHash})
@@ -322,6 +325,7 @@ $(document).ready(function(){
 
 	var updateBlocks = setInterval(function(){
 		checkForUpdatedTransactionsArray();
+		refreshBlocks();
 	},1000)
 
 	document.addEventListener("new-block", function(e) {
