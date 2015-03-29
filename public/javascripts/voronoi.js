@@ -5,8 +5,7 @@ var bucketWidth = 960,
     bucketHeight = 500;
 var blockWidth = 960,
 	blockHeight = 50;
-var info;
-
+var info, blockSet;
 var mapToVoro, voroed;
 
 var blockSvgs = [], blockPath = [], blockTrans = [];
@@ -200,53 +199,31 @@ var resortBlocks = function() {
 	console.log("resort")
     d3.select(".blocks").selectAll("svg").sort(function(a, b) {
     		var blockList = _.pluck(blocks,"height")
-    		console.log(a,b)
+    		console.log("a",a.height)
+    		console.log("b",b.height)
 			return d3.descending(a.height,b.height);
 	    })
 		.transition().duration(500)
 }
 
-var renderSingleBlock = function(blockHash) {
-
-	// var newBlock = d3.select(".blocks").insert("svg",function(){
-	// 		// Figures out block height
-	// 		var blockIndex = _.indexOf(blocks, getBlock(blockHash));
-	// 		// Either appends (leaves blank) if unidentified or prepends before preceding block
-	// 		var sel = _.isUndefined(blocks[blockIndex+1]) ? "" : '#height'+blocks[blockIndex+1].height
-	// 		// Double check that the element exists to be prepended to.
-
-			
-
-	// 		if(_.isEmpty(d3.select(".blocks").selectAll(sel))) sel = "svg:first-child"
-	// 		console.log("Selection", sel)
-	// 		var target = d3.select(sel)
-	// 		console.log("target",target)
-
-	// 		if(d3.select('.blocks').selectAll("svg") == 0) {
-	// 			return ""
-	// 		} else { return target }
-
-	// 	})
-	// This works better: is based off of blocks data, vs. distinct SVGs
-	var newBlock = d3.select(".blocks").append("svg")
-		.data(blocks)
-		.attr("id",function(d) { return "height" + getBlockHeight(d.hash)})
-		.attr("class", "block")
-		// .attr("class","block")
-	    .attr("width", blockWidth)
-	    .attr("height", blockHeight)
+var setupBlocks = function() {
+	blockSet = d3.selectAll(".blocks")
+	refreshBlocks();
 
 	// This is an engine, should work for all blocks as they're drawn	
 	voronoi = _.isUndefined(voronoi) ? d3.geom.voronoi()
 	    .clipExtent([[0, 0], [blockWidth, blockHeight]]) : voronoi;
+}
 
-    var block = getBlock(blockHash)
-    if(_.findWhere(blockTrans,{"id":blockHash})) return
-	blockTrans.push({
-		id: blockHash,
-		count: 0,
-		expect: block.transaction_hashes.length
-	})
+var refreshBlocks = function() {
+
+	blockSet.data(blocks).enter()
+		.append("svg")
+		.attr("id",function(d) { return "height" + getBlockHeight(d.hash)})
+		.attr("class", "block")
+	    .attr("width", blockWidth)
+	    .attr("height", blockHeight)	
+	resortBlocks();
 }
 
 var drawCompletedBlock = function(blockHash) {
@@ -336,6 +313,7 @@ var mouseOutTransaction = function(d){
 
 $(document).ready(function(){
 	setupBucket();
+	setupBlocks();
 	setupInfoBox();
 	setupSorting();
 	for(var i=0;i<testBlocks.length;i++) {
@@ -348,7 +326,13 @@ $(document).ready(function(){
 
 	document.addEventListener("new-block", function(e) {
 		pruneXy(e.detail)
-		renderSingleBlock(e.detail);
+	    var block = getBlock(e.detail)
+	    if(_.findWhere(blockTrans,{"id":e.detail})) return
+			blockTrans.push({
+			id: e.detail,
+			count: 0,
+			expect: block.transaction_hashes.length
+		})
 	});
 
 	document.addEventListener("block-populated", function(e) {

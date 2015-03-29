@@ -52,8 +52,8 @@ var GetBlockLevelTransactions = function(block) {
 		return
 	}
 	blocks.push(block)
-	blocks = _.sortBy(blocks,'height')
-	blocks = blocks.reverse();
+	// blocks = _.sortBy(blocks,'height')
+	// blocks = blocks.reverse();
 
 	var hashes = block.transaction_hashes;
 	var request_hashes = [];
