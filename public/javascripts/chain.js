@@ -78,7 +78,7 @@ var GetBlockLevelTransactions = function(block) {
 			clearInterval(query) 
 		}
 		iter++;
-	},10)
+	},5)
 }
 
 var FetchTransactions = function(blockhash, last) {
@@ -89,7 +89,10 @@ var FetchTransactions = function(blockhash, last) {
 		data: {'api-key-id': key},
 		type: 'GET',
 		success: function(data) {
-        	transactions.push(data);
+
+			var index = transactions.indexOf(_.findWhere(transactions,{"hash":data.hash}));
+			if(index<0) transactions.push(data);
+			else transactions[index] = data
         	// Not a good solution, assumes first in, first out
         	if(last) {
         		var blockPopulated = new CustomEvent("block-populated",{ "detail": blockhash });

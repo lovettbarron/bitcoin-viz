@@ -5,8 +5,9 @@ var bucketWidth = 960,
     bucketHeight = 500;
 var blockWidth = 960,
 	blockHeight = 50;
-var info, blockSet;
+var info, blockSet, transArea;
 var mapToVoro, voroed;
+var area, sx, sy;
 
 var blockSvgs = [], blockPath = [], blockTrans = [];
 
@@ -50,6 +51,9 @@ var pruneXy = function(newBlockHash) {
 		console.log("Couldn't find block",newBlockHash)
 		return
 	}
+
+	// xy = _.without(xy, block.transaction_hashes);
+
 	_.each(block.transaction_hashes,function(d,i){
 		var check = _.findWhere(xy,{"id":d});
 		check = _.isUndefined(check) ? false : check;
@@ -57,7 +61,7 @@ var pruneXy = function(newBlockHash) {
 		if(check){
 			var index = xy.indexOf(check);
 			if(index!=-1) {
-				console.log("removing " + d + " at " + index)
+				// console.log("removing " + d + " at " + index)
 				xy.splice(index,1)
 			}
 		}
@@ -107,13 +111,16 @@ var redraw = function() {
 	var focus = bucketSvg.selectAll("circle")
 	    .data(xy)
 
+	 // console.log("xy length", xy.length)
+
 	focus.enter().append("circle")
 	    .attr("r", function(d) { return getWidthFromSatoshis(d.size,5,20)})
 	    .attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
 	    .on('mouseover',mouseOverTransaction)
 		.on('mouseout',mouseOutTransaction)
-		
+
     focus.exit().remove();
+    // console.log("circle count", focus[0].length);
 	 //  .transition()
 		// .ease(Math.sqrt)
 		// .attr("r", 4.5);
@@ -173,11 +180,11 @@ var setupBucket = function() {
 	    // .on("mousemove", function() { vertices[0] = d3.mouse(this); redraw(); });
 
 	drawBucket();
-
-	var interval = setInterval(function() {
-		force.start();
+	
+	force.start();
+	d3.timer(function() {
 		redraw();
-	}, 60);
+	},60)
 }
 
 var tick = function() {
@@ -200,6 +207,7 @@ var setupSorting = function() {
 
 var resortBlocks = function() {
 	console.log("resort")
+
     d3.select(".blocks").selectAll("svg").sort(function(a, b) {
 			return d3.descending(a.height,b.height);
 	    })
@@ -211,6 +219,18 @@ var resortBlocks = function() {
 
 var setupBlocks = function() {
 	blockSet = d3.select(".blocks")
+
+    area = d3.svg.line()
+	    .x(function(d) { return d.x; })
+	    .y(function(d) { return d.y; })
+	    .interpolate("basis");
+	    
+	sx = d3.scale.linear() // <-A
+		.domain([0, 10])
+		.range([0, blockWidth]),
+	sy = d3.scale.linear() // <-B
+		.domain([0, 10])
+		.range([blockHeight, 0]);
 
 	// This is an engine, should work for all blocks as they're drawn	
 	voronoi = _.isUndefined(voronoi) ? d3.geom.voronoi()
@@ -243,43 +263,82 @@ var refreshBlocks = function() {
 	// resortBlocks();
 }
 
-var drawCompletedBlock = function(blockHash) {
-	var svg = d3.selectAll('svg').filter(function(d){
-		if(this.id == "height"+getBlockHeight(blockHash)) return this
-	})
+var drawCompletedBlock = function(blockHash, index) {
 
-	var t = _.where(transactions,{"block_hash":blockHash})
-	var coords = parseForBlock(t,blockWidth,blockHeight,blockHash)
+	// Try to only define this search once...
+	if(_.isUndefined(blockTrans[index])) return
+	// Checks if undefined, or if it snagged an empty element
+	if(_.isUndefined(blockTrans[index].block) || blockTrans[index].block[0] <= 0) {
+		blockTrans[index].block = d3.selectAll('svg').filter(function(d){
+			if(this.id == "height"+getBlockHeight(blockHash)) return this
+		})
+	}  
 
-	var rects = 
-	svg.selectAll("rect")
-	    .data(coords)
-	  .enter()
+	var t = blockTrans[index].block
+		.selectAll(".line")
+		// .data([blockTrans[index].coords])
+		.data([blockTrans[index].coords], function(d){
+			var map = _.map(d,function(d,i){
+				return { "x":d.x, "y":d.y }
+			})
+			// console.log(map)
+			return map
+		})
 
-	rects.append("rect")
-	    .attr("x",function(d){
-	    	return 0
-	    })
-	    .attr("y", function(d){
-	    	return d.y
-	    })
-	    .attr("width",function(d) {
-	     	return getWidthFromSatoshis(d.size,5,20)
-	    })
-	    .attr("height", function(d){
-	    	return blockHeight
-	    })
-		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-		.on('mouseover',mouseOverTransaction)
-		.on('mouseout',mouseOutTransaction)
-		.transition()
-		    .duration(function(){
-		    	return 500 + (Math.random()*200)
-		    })
-	    .attr("x",function(d){
-	    	return d.x
-	    })
+	t.enter()
+  .append("path")
+    .attr("class", "line")
+    .attr("d", function(d,i){
+    	// console.log(d,i)
+    	return area(d)
+    });
+    t.exit().remove();
+		// .append("path")
+		// .attr("class", "line")
+		// .attr("d", function(d){
+		// 	return "M"+d.x+","+d.y+",L"+""
+		// 	// console.log(area([d.x,d.y]))
+		// 	// return area(d)
+		// })
+		// .attr("stroke","red");
 
+	// t.exit().remove()
+
+
+
+
+	// var rects = 
+	// svg.selectAll("rect")
+	//     .data(coords)
+	//   .enter()
+
+	// blockTrans[index].block
+	// 	.selectAll("rects")
+	// 	.data(blockTrans[index].coords)
+	// 	.enter()
+	// 	.append("rect")
+	//     .attr("x",function(d){
+	//     	return d.x
+	//     })
+	//     .attr("y", function(d){
+	//     	return blockHeight
+	//     })
+	//     .attr("width",function(d) {
+	//      	return getWidthFromSatoshis(d.size,5,20)
+	//     })
+	//     .attr("height", function(d){
+	//     	return blockHeight
+	//     })
+	// 	.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+	// 	.on('mouseover',mouseOverTransaction)
+	// 	.on('mouseout',mouseOutTransaction)
+	// 	.transition()
+	// 	    .duration(function(){
+	// 	    	return 200 + (Math.random()*200)
+	// 	    })
+	//     .attr("y",function(d){
+	//     	return d.y
+	//     })
 
 	// svg.selectAll("circle")
 	//     .data(coords)
@@ -332,7 +391,9 @@ var checkForUpdatedTransactionsArray = function() {
 		if(d.count !== d.expect) {
 			var t = _.where(transactions,{"block_hash":d.id})
 			d.count = t.length;
-			drawCompletedBlock(d.id)
+			// var index = blockTrans.indexOf(_.findWhere(blockTrans,{"id":d.id}))
+			blockTrans[i].coords = parseForBlock(t,blockWidth,blockHeight,d.id)
+			drawCompletedBlock(d.id,i)
 		}
 	})
 }
@@ -389,7 +450,12 @@ $(document).ready(function(){
 		FetchBlock(testBlocks[i]);
 	}
 
-	var updateBlocks = setInterval(function(){
+	// var updateBlocks = setInterval(function(){
+	// 	checkForUpdatedTransactionsArray();
+	// 	refreshBlocks();
+	// },300)
+
+	d3.timer(function(){
 		checkForUpdatedTransactionsArray();
 		refreshBlocks();
 	},300)
@@ -401,7 +467,8 @@ $(document).ready(function(){
 			blockTrans.push({
 			id: e.detail,
 			count: 0,
-			expect: block.transaction_hashes.length
+			expect: block.transaction_hashes.length,
+			coords: []
 		})
 		// resortBlocks()
 	});
@@ -409,6 +476,7 @@ $(document).ready(function(){
 	document.addEventListener("block-populated", function(e) {
 		console.log("Populated ", e.detail)
 		drawCompletedBlock(e.detail);
+		resortBlocks();
 	});
 
 	document.addEventListener("new-trans", function(e) {
