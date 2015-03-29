@@ -11,7 +11,9 @@ var mapToVoro, voroed;
 var blockSvgs = [], blockPath = [], blockTrans = [];
 
 var testBlocks = ["0000000000000000070ea877d0b45f31147575842562b1e09f6a1bd6e46f09ed","0000000000000000060577e744223eea22cd45597ca55b1e981ce19874be4f7b","000000000000000001a40ab7df60551364c33e4bade591dc946de26e23569418","00000000000000000580799b80ab02200454c02701023076208d2942a45197e9","00000000000000001641d325610619de2c3b1d7d4c04d7e2b88975faa99bd26a"]
-
+///////////////////////////////////////////////////////////
+///////////  Data or Time oriented Functions	  /////////
+///////////////////////////////////////////////////////////
 
 var getWidthFromSatoshis = function(satoshis, min, max) {
   var maxWidth = !_.isUndefined(max) ? max : blockWidth/3;
@@ -22,15 +24,8 @@ var getWidthFromSatoshis = function(satoshis, min, max) {
   return w;
 }
 
-var tick = function() {
-  bucketSvg.selectAll("circle")
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
-}
-
 var parseToXY = function(data, width, height) {
 	// Add new unconfirmed to the bucket
-
 	_.each(data,function(d,i) {
 		if(!_.findWhere(xy,{"id":d.hash})) {
 			var size = getTransactionAmount(d.hash)
@@ -55,13 +50,15 @@ var pruneXy = function(newBlockHash) {
 		console.log("Couldn't find block",newBlockHash)
 		return
 	}
-
 	_.each(block.transaction_hashes,function(d,i){
-		if(_.findWhere(xy,{"id":d.hash})){
-			var index = xy.indexOf(_.findWhere(xy,{"id":d.hash}));
-			console.log("removing " + d.hash + " at " + index)
+		var check = _.findWhere(xy,{"id":d});
+		check = _.isUndefined(check) ? false : check;
+		// console.log("Trying " + d, check)
+		if(check){
+			var index = xy.indexOf(check);
 			if(index!=-1) {
-				xy = xy.splice(index,1)
+				console.log("removing " + d + " at " + index)
+				xy.splice(index,1)
 			}
 		}
 	})
@@ -118,19 +115,19 @@ var redraw = function() {
 		// .ease(Math.sqrt)
 		// .attr("r", 4.5);
 
-	mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
-	_.each(mapToVoro, function(d,i){
-		if(_.isNaN(d[0]) || _.isNaN(d[1])) {
-			console.log("NAN DETECTED")
-			mapToVoro.splice(i)
-		}
-		if(_.isUndefined(d[0]) || _.isUndefined(d[1])) {
-			console.log("UNDEFINED DETECTED")
-			mapToVoro.splice(i)
-		}
-	})
+	// mapToVoro = _.map(xy,function(d) { return [d.x,d.y] });
+	// _.each(mapToVoro, function(d,i){
+	// 	if(_.isNaN(d[0]) || _.isNaN(d[1])) {
+	// 		console.log("NAN DETECTED")
+	// 		mapToVoro.splice(i,1)
+	// 	}
+	// 	if(_.isUndefined(d[0]) || _.isUndefined(d[1])) {
+	// 		console.log("UNDEFINED DETECTED")
+	// 		mapToVoro.splice(i,1)
+	// 	}
+	// })
 
-	voroed = bucketVoronoi(mapToVoro);
+	// voroed = bucketVoronoi(mapToVoro);
 
 
 	// There's a bug here with the data being fed in. Not sure of the source.
@@ -180,6 +177,13 @@ var setupBucket = function() {
 	}, 60);
 }
 
+var tick = function() {
+  bucketSvg.selectAll("circle")
+      .attr("cx", function(d) { return d.x; })
+      .attr("cy", function(d) { return d.y; });
+}
+
+
 ///////////////////////////////////////////////////////////
 /////////// Rendering block re: single hash ///////////////
 ///////////////////////////////////////////////////////////
@@ -218,12 +222,12 @@ var drawCompletedBlock = function(blockHash) {
 	})
 
 	var t = _.where(transactions,{"block_hash":blockHash})
-	var coords = parseForBlock(t,blockWidth,10)
+	var coords = parseForBlock(t,blockWidth,blockHeight,blockHash)
 	// console.log(coords)
 	svg.selectAll("circle")
 	    .data(coords)
 	  .enter().append("circle")
-	    .attr("r", 1.5)
+	    .attr("r", 4.5)
 	    .attr("cx",function(d){
 	    	return d.x
 	    })
@@ -231,6 +235,8 @@ var drawCompletedBlock = function(blockHash) {
 	    	return d.y
 	    })
 		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+		.on("mouseover",mouseOverTransaction)
+		.on("mouseout",mouseOutransaction)
 }
 
 var findRatioViaSatoshis = function(transaction_hash) {
@@ -238,13 +244,15 @@ var findRatioViaSatoshis = function(transaction_hash) {
 	return getWidthFromSatoshis(val, 0.1, 1.0)
 }
 
-var parseForBlock = function(data, width, height) {
+var parseForBlock = function(data, width, height, blockhash) {
 	var arr = [];
+	var bd = _.findWhere(blockTrans,{"id":blockhash});
+	var ratio = blockWidth / bd.expect
 	_.each(data,function(d,i) {
 		var size = getTransactionAmount(d.hash)
 		arr.push(
 			{
-				x: i+findRatioViaSatoshis(d.hash),
+				x: i*ratio,//*findRatioViaSatoshis(d.hash),
 				y: Math.random()*height,
 				id: d.hash,
 				size: getTransactionAmount(size)
@@ -264,6 +272,23 @@ var checkForUpdatedTransactionsArray = function() {
 	})
 }
 
+
+
+///////////////////////////////////////////////////////////
+///////////		 Interactive components		 //////////////
+///////////////////////////////////////////////////////////
+
+var mouseOverTransaction = function(d){
+	div.transition()        
+		.duration(200)      
+		.style("opacity", .9);  
+}
+
+var mouseOutTransaction = function(d){
+	div.transition()        
+		.duration(300)      
+		.style("opacity", 0);   
+}
 
 ///////////////////////////////////////////////////////////
 /////////// Rendering bock re: single hash ////////////////

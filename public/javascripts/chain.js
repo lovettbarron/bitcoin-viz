@@ -41,7 +41,10 @@ document.addEventListener("new-trans", function(e) {
 ///////////////////////   API Methods   ///////////////////
 ///////////////////////////////////////////////////////////
 var GetBlockLevelTransactions = function(block) {
+	if(_.isUndefined(block)) { console.log("No block"); return;}
 	console.log("got block",block)
+	blocks.push(block)
+	
 	var hashes = block.transaction_hashes;
 	var request_hashes = [];
 	var iter=0, count=0;
@@ -53,7 +56,8 @@ var GetBlockLevelTransactions = function(block) {
 		if(count>=1) { iter+=1; count = 0 }
 	})
 
-	// console.log("r",request_hashes)
+	var newBlock = new CustomEvent("new-block",{ "detail": block.hash });
+	document.dispatchEvent(newBlock);
 
 	var iter = 0;
 	var query = setInterval(function() {
@@ -65,8 +69,6 @@ var GetBlockLevelTransactions = function(block) {
 		}
 		iter++;
 	},10)
-
-	blocks.push(block)
 }
 
 var FetchTransactions = function(blockhash, last) {
@@ -98,8 +100,6 @@ var FetchBlock = function(blockhash) {
 			if(!_.findWhere(blocks,{"hash":blockhash})) {
 				blocks.push(data);
 	        	GetBlockLevelTransactions(data)
-	        	var newBlock = new CustomEvent("new-block",{ "detail": data.hash });
-				document.dispatchEvent(newBlock);
 	        }
         	return data
 		}
