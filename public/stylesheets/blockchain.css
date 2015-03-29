@@ -36,11 +36,17 @@ svg {
 }
 
 .blocks {
+  position: relative;
   background: #2D2D2D;
   width: 100%;
   height: auto;
   padding: 0;
   
+}
+
+.blocks > svg {
+  position: absolute;
+  top 0;
 }
 
 

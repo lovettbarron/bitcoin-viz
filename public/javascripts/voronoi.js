@@ -198,10 +198,12 @@ var setupSorting = function() {
 var resortBlocks = function() {
 	console.log("resort")
     d3.select(".blocks").selectAll("svg").sort(function(a, b) {
-    		var blockList = _.pluck(blocks,"height")
 			return d3.descending(a.height,b.height);
 	    })
 		.transition().duration(500)
+		.style("top",function(d,i){
+			 return 60 + ((i*60)) + "px";
+		})
 }
 
 var setupBlocks = function() {
@@ -215,16 +217,25 @@ var setupBlocks = function() {
 var refreshBlocks = function() {
 
 	blockSet.selectAll("svg")
-	.data(blocks)
+		.data(blocks)
 	.enter()
 		.append("svg")
 		.attr("id",function(d) { return "height" + getBlockHeight(d.hash)})
 		.attr("class", "block")
 	    .attr("width", blockWidth)
 	    .attr("height", 0)
+	    .style("left", function(){
+	    	return window.innerWidth/2 - blockWidth/2
+	    })
 	    .transition()
 	    .duration(500)
 	    .attr("height", blockHeight)
+
+	blockSet.selectAll("svg")
+		.data(blocks)
+		.enter()
+		.append("text")
+	    .text(function(d) { getBlockHeight(d.hash) } )
 
 	// resortBlocks();
 }
@@ -242,14 +253,21 @@ var drawCompletedBlock = function(blockHash) {
 	  .enter().append("circle")
 	    .attr("r", 4.5)
 	    .attr("cx",function(d){
-	    	return d.x
+	    	return 0
 	    })
 	    .attr("cy", function(d){
 	    	return d.y
 	    })
 		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-		.on("mouseover",mouseOverTransaction)
-		.on("mouseout",mouseOutTransaction)
+		.transition()
+		    .duration(function(){
+		    	return 500 + (Math.random()*200)
+		    })
+	    .attr("cx",function(d){
+	    	return d.x
+	    })
+		// .on("mouseover",mouseOverTransaction)
+		// .on("mouseout",mouseOutTransaction)
 }
 
 var findRatioViaSatoshis = function(transaction_hash) {
@@ -297,6 +315,7 @@ var setupInfoBox = function() {
 }
 
 var mouseOverTransaction = function(d){
+	console.log("mouse",d)
 	info.transition()        
 		.duration(200)
 		.style("opacity", .9);  
@@ -307,6 +326,13 @@ var mouseOutTransaction = function(d){
 	info.transition()        
 		.duration(300)      
 		.style("opacity", 0);   
+}
+
+var windowResize = function(d) {
+	blockSet.selectAll("svg").data(blocks)
+		.style("left", function(){
+	    	return window.innerWidth/2 - blockWidth/2
+	    })
 }
 
 ///////////////////////////////////////////////////////////
@@ -326,7 +352,7 @@ $(document).ready(function(){
 	var updateBlocks = setInterval(function(){
 		checkForUpdatedTransactionsArray();
 		refreshBlocks();
-	},1000)
+	},300)
 
 	document.addEventListener("new-block", function(e) {
 		pruneXy(e.detail)
