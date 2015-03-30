@@ -170,7 +170,6 @@ var redraw = function() {
 	//   .attr("d", polygon);
 
 	// bucketPath.order();
-	force.start();
 }
 
 var setupBucket = function() {
@@ -183,6 +182,9 @@ var setupBucket = function() {
 	
 	force.start();
 	d3.timer(function() {
+		force.start();
+		force.start();
+		force.start();
 		redraw();
 	},60)
 }
@@ -458,7 +460,7 @@ $(document).ready(function(){
 	d3.timer(function(){
 		checkForUpdatedTransactionsArray();
 		refreshBlocks();
-	},300)
+	},1000)
 
 	document.addEventListener("new-block", function(e) {
 		pruneXy(e.detail)
