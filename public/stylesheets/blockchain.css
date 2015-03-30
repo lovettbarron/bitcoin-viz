@@ -106,6 +106,7 @@ circle {
 
 svg.block {
   border: 1px solid #5D5D5D;
+  height: 60px
 }
 
 .q0-9 { fill: rgb(10,10,10); }

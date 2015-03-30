@@ -186,13 +186,14 @@ var setupBucket = function() {
 		force.start();
 		force.start();
 		redraw();
+		bucketSvg.selectAll("circle")
+	      .attr("cx", function(d) { return d.x; })
+	      .attr("cy", function(d) { return d.y; });
 	},60)
 }
 
 var tick = function() {
-  bucketSvg.selectAll("circle")
-      .attr("cx", function(d) { return d.x; })
-      .attr("cy", function(d) { return d.y; });
+  
 }
 
 
@@ -277,24 +278,24 @@ var drawCompletedBlock = function(blockHash, index) {
 	}  
 
 	var t = blockTrans[index].block
-		.selectAll(".line")
-		// .data([blockTrans[index].coords])
-		.data([blockTrans[index].coords], function(d){
-			var map = _.map(d,function(d,i){
-				return { "x":d.x, "y":d.y }
-			})
-			// console.log(map)
-			return map
-		})
+		.selectAll("circle")
+		.data(blockTrans[index].coords)
+		// .data([blockTrans[index].coords], function(d){
+		// 	var map = _.map(d,function(d,i){
+		// 		return { "x":d.x, "y":d.y }
+		// 	})
+		// 	// console.log(map)
+		// 	return map
+		// })
 
-	t.enter()
-  .append("path")
-    .attr("class", "line")
-    .attr("d", function(d,i){
-    	// console.log(d,i)
-    	return area(d)
-    });
-    t.exit().remove();
+	// t.enter()
+ //  .append("path")
+ //    .attr("class", "line")
+ //    .attr("d", function(d,i){
+ //    	// console.log(d,i)
+ //    	return area(d)
+ //    });
+ //    t.exit().remove();
 		// .append("path")
 		// .attr("class", "line")
 		// .attr("d", function(d){
@@ -342,24 +343,23 @@ var drawCompletedBlock = function(blockHash, index) {
 	//     	return d.y
 	//     })
 
-	// svg.selectAll("circle")
-	//     .data(coords)
-	//   .enter().append("circle")
-	//     .attr("r", 4.5)
-	//     .attr("cx",function(d){
-	//     	return 0
-	//     })
-	//     .attr("cy", function(d){
-	//     	return d.y
-	//     })
-	// 	.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
-	// 	.transition()
-	// 	    .duration(function(){
-	// 	    	return 500 + (Math.random()*200)
-	// 	    })
-	//     .attr("cx",function(d){
-	//     	return d.x
-	//     })
+	t
+	  .enter().append("circle")
+	    .attr("r", 4.5)
+	    .attr("cx",function(d){
+	    	return 0
+	    })
+	    .attr("cy", function(d){
+	    	return d.y
+	    })
+		.attr("class", function(d, i) { return "q" + (i % 9) + "-9"; })
+		.transition()
+		    .duration(function(){
+		    	return 500 + (Math.random()*200)
+		    })
+	    .attr("cx",function(d){
+	    	return d.x
+	    })
 		// .on("mouseover",mouseOverTransaction)
 		// .on("mouseout",mouseOutTransaction)
 }
@@ -438,6 +438,10 @@ var windowResize = function(d) {
 	    })
 }
 
+var AnimateWhileLoading = function(d){
+	var target = d3.selectAll("svg").select(d)
+}
+
 ///////////////////////////////////////////////////////////
 /////////// Rendering bock re: single hash ////////////////
 ///////////////////////////////////////////////////////////
@@ -459,7 +463,6 @@ $(document).ready(function(){
 
 	d3.timer(function(){
 		checkForUpdatedTransactionsArray();
-		refreshBlocks();
 	},1000)
 
 	document.addEventListener("new-block", function(e) {
@@ -478,6 +481,7 @@ $(document).ready(function(){
 	document.addEventListener("block-populated", function(e) {
 		console.log("Populated ", e.detail)
 		drawCompletedBlock(e.detail);
+		refreshBlocks();
 		resortBlocks();
 	});
 

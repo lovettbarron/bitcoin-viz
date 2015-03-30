@@ -80,7 +80,7 @@ var GetBlockLevelTransactions = function(block) {
 			clearInterval(query) 
 		}
 		iter++;
-	},5)
+	},2)
 }
 
 var FetchTransactions = function(blockhash, last) {
