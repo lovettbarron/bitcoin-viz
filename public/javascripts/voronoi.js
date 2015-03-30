@@ -456,10 +456,10 @@ $(document).ready(function(){
 		FetchBlock(testBlocks[i]);
 	}
 
-	// var updateBlocks = setInterval(function(){
-	// 	checkForUpdatedTransactionsArray();
-	// 	refreshBlocks();
-	// },300)
+	var updateBlocks = setInterval(function(){
+		checkForUpdatedTransactionsArray();
+		refreshBlocks();
+	},300)
 
 	d3.timer(function(){
 		checkForUpdatedTransactionsArray();
@@ -481,7 +481,7 @@ $(document).ready(function(){
 	document.addEventListener("block-populated", function(e) {
 		console.log("Populated ", e.detail)
 		drawCompletedBlock(e.detail);
-		refreshBlocks();
+		// refreshBlocks();
 		resortBlocks();
 	});
 
