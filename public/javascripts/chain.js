@@ -200,6 +200,7 @@ var getBlockHeight = function(hash) {
 		// while(!_.isUndefined(block)) {
 		// 	return block.height
 		// }
+		return
 	} else {
 		return block.height
 	}
